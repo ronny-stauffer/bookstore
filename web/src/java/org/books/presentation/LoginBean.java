@@ -6,6 +6,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,20 +17,27 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.core.MediaType;
+import org.books.presentation.login.openidconnect.ClientRegistration;
 import org.books.presentation.login.openidconnect.ProviderConfiguration;
 import org.books.presentation.login.openidconnect.Issuer;
 import org.books.presentation.navigation.Navigation;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Steps:
  * 1. Initiate Authentication
  * 1.1 Provider Discovery (using Simple Web Discovery)
  *      Lookup instance of OpenID Connect Issuer Service Type
- *      -> Reference to OpenID Connect Issuer Service
+ *      -> Location to OpenID Connect Issuer Service
  *      Fetch Provider Configuration (using the issuer service)
  *      -> Provider Configuration
  * 1.2 Dynamic Client (= Service Provider) Registration
@@ -88,6 +99,9 @@ public class LoginBean {
     
     private static final Logger LOGGER = Logger.getLogger(LoginBean.class.getName());
     
+    @PersistenceContext(unitName = "openIDConnect")
+    private EntityManager em;
+    
     @NotNull
     @Size(min = 1, max = 100)
     private String openIDConnectIdentifier;
@@ -101,7 +115,17 @@ public class LoginBean {
     }
     
     public String getLoginWithGoogleLink() {
-        return "http://google.com";
+        try {
+        return GOOGLE_AUTHORIZATION_ENDPOINT + "?"
+                + "response_type=" + CODE_AUTHORIZATION_RESPONSE_TYPE + "&"
+                + "client_id=" + CLIENT_IDENTIFIER_FOR_GOOGLE + "&"
+                + "redirect_uri=" + URLEncoder.encode(CALLBACK_URI, "utf-8") + "&"
+                + "scope=" + OPENID_AUTHORIZATION_SCOPE + "&"
+                + "state=" + AUTHORIZATION_STATE_VALUE + "&"
+                + "display=popup";
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     public String login() {
@@ -115,7 +139,34 @@ public class LoginBean {
     public String initiateAuthentication() {
         assert openIDConnectIdentifier != null && openIDConnectIdentifier.length() > 1;
 
-        Client client = Client.create();        
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCertificatesTrustManager = new TrustManager[] { new X509TrustManager() {
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+            @Override
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+            
+            }
+            @Override
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+            
+            }
+        }};
+        
+        // Install the all-trusting trust manager
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCertificatesTrustManager, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            throw new RuntimeException(e);
+        }       
+                
+        Client client = Client.create();
         
         ProviderConfiguration providerConfiguration = null;
         if (GOOGLE_SHORTCUT.equals(openIDConnectIdentifier) || openIDConnectIdentifier.matches(GOOGLE_OPENID_CONNECT_IDENTIFIER_REGEX)) {
@@ -198,16 +249,17 @@ public class LoginBean {
         LOGGER.info(String.format("Provider Registration Endpoint: %s", providerConfiguration.registration_endpoint));
         LOGGER.info(String.format("Provider Authorization Endpoint: %s", providerConfiguration.authorization_endpoint));
 
-        ClientRegistration clientRegistration = getClientRegistration(providerConfiguration.issuer);
+        ClientRegistration clientRegistration = getClientRegistration(providerConfiguration);
         
         String authorizationRequestURL = null;
         try {
             authorizationRequestURL = client.resource(providerConfiguration.authorization_endpoint)
                 .queryParam("response_type", CODE_AUTHORIZATION_RESPONSE_TYPE)
-                .queryParam("client_id", clientRegistration.clientIdentifier)
+                .queryParam("client_id", clientRegistration.getClientIdentifier())
                 .queryParam("redirect_uri", URLEncoder.encode(CALLBACK_URI, "utf-8"))
                 .queryParam("scope", OPENID_AUTHORIZATION_SCOPE)
                 .queryParam("state", AUTHORIZATION_STATE_VALUE)
+                .queryParam("nonce", "123") // Required for wenoit altough optional according to the OpenID Connect specification
                 .getURI().toURL().toString();
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -227,27 +279,62 @@ public class LoginBean {
         return null;        
     }
     
-    private class ClientRegistration {
-        public String clientIdentifier;
-        public String clientSecret;
-    }
-    
     /**
      * Gets the client registration for the given issuer, either by using hardcoded values, by doing a registration store lookup or by performing a dynamic client registration.
      * @param issuer
      * @return 
      */
-    private ClientRegistration getClientRegistration(String issuer) {
-        if (GOOGLE_ISSUER.equals(issuer)) {
-            ClientRegistration clientIdentity = new ClientRegistration();
-            clientIdentity.clientIdentifier = CLIENT_IDENTIFIER_FOR_GOOGLE;
-            clientIdentity.clientSecret = CLIENT_SECRET_FOR_GOOGLE;
+    private ClientRegistration getClientRegistration(ProviderConfiguration providerConfiguration) {
+        if (GOOGLE_ISSUER.equals(providerConfiguration.issuer)) {
+            //ClientRegistration clientRegistration = new ClientRegistration();
+            ClientRegistration clientRegistration = ClientRegistration.create(GOOGLE_ISSUER);
+            clientRegistration.setClientIdentifier(CLIENT_IDENTIFIER_FOR_GOOGLE);
+            clientRegistration.setClientSecret(CLIENT_SECRET_FOR_GOOGLE);
             
-            return clientIdentity;
-        //} else {
-
+            return clientRegistration;
+        } else {
+            ClientRegistration clientRegistration = null;
+            try {
+                clientRegistration = em.createQuery("select clientRegistration from ClientRegistration clientRegistration where clientRegistration.issuer = :issuer", ClientRegistration.class)
+                    .setParameter("issuer", providerConfiguration.issuer)
+                    .getSingleResult();
+            } catch (NoResultException e) {
+                // Ignore exception
+            }
+            if (clientRegistration != null) {
+                return clientRegistration;
+            } else {
+                // Perform Dynamic Client Registration
+                Client client = Client.create();
+                try {
+                    clientRegistration = client.resource(providerConfiguration.registration_endpoint)
+                        //.queryParam("type", "client_associate")
+                        //.queryParam("application_name", "Bookstore") // Required for oxAuth altough optional according to the OpenID Connect specification
+                        //.queryParam("application_type", "web") // Required for oxAuth altough optional according to the OpenID Connect specification
+                        //.queryParam("redirect_uris", URLEncoder.encode(CALLBACK_URI, "utf-8"))
+                        //.queryParam("logo_url", URLEncoder.encode(LOGO_URL, "utf-8"))
+                        ////.queryParam("user_id_type", "pairwise")
+                        //.queryParam("token_endpoint_auth_type", "client_secret_basic")
+                        .type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+                        .accept(MediaType.APPLICATION_JSON_TYPE)
+                        .post(ClientRegistration.class,
+                                "type=client_associate" + "&"
+                                + "application_name=Bookstore" + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
+                                + "application_type=web" + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
+                                + "redirect_uris=" + URLEncoder.encode(CALLBACK_URI, "utf-8") + "&"
+                                + "logo_url=" + URLEncoder.encode(LOGO_URL, "utf-8") + "&"
+                                //+ "user_id_type=pairwise" + "&"
+                                + "token_endpoint_auth_type=client_secret_basic"
+                            );
+                        
+                    LOGGER.info(String.format("Client Registration Client Identifier: %s", clientRegistration.getClientIdentifier()));
+                    LOGGER.info(String.format("Client Registration Client Secret: %s", clientRegistration.getClientSecret()));
+                    
+                    return clientRegistration;
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
-        
-        throw new NotImplementedException();
     }
 }

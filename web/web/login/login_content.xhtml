@@ -16,6 +16,9 @@
                 </h:panelGrid>
                 <h:messages styleClass="error"/>
             </h:form>
+            <h:outputLink value="#{login.loginWithGoogleLink}">
+                <h:outputText value="#{texts.loginWithGoogle}"/>
+            </h:outputLink>
         </ui:composition>
     </h:body>
 </html>
