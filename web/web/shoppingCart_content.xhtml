@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+    
+    <h:body>
+        <ui:composition>
+            <h:form>
+                <h:panelGrid columns="1">
+                    <h:dataTable value="#{shoppingCartBean.lineItems}" var="lineItem" cellspacing="3" cellpadding="0" rendered="#{shoppingCartBean.containBooks()}">
+                        <h:column>
+                            <f:facet name="header">
+                                <h:outputText value="#{texts.title}"/>
+                            </f:facet>
+                            <h:outputText value="#{lineItem.book.title}"/>
+                        </h:column>
+                        <h:column>
+                            <f:facet name="header">
+                                <h:outputText value="#{texts.price}"/>
+                            </f:facet>
+                            <h:outputText value="#{currency.currency} #{lineItem.book.price}">
+                                <f:convertNumber pattern="#,##00.00"/>
+                            </h:outputText>
+                            <f:facet name="footer">
+                                <h:outputText value="#{currency.currency} #{shoppingCartBean.amount}" rendered="#{shoppingCartBean.containBooks()}">
+                                    <f:convertNumber pattern="#,##00.00"/>
+                                </h:outputText>
+                            </f:facet>
+                        </h:column>
+                        <h:column>
+                            <f:facet name="header">
+                                <h:outputText value="#{texts.quantity}"/>
+                            </f:facet>
+                            <h:selectOneMenu id="quantity" value="#{lineItem.quantity}">
+                                <f:selectItems value="#{shoppingCartBean.quantities}"/>
+                                <f:ajax event="change" listener="#{shoppingCartBean.updateQuantity(lineItem.book, lineItem.quantity)}" render="@form"/>
+                            </h:selectOneMenu>
+                            <!--
+                            <f:facet name="footer">
+                                <h:commandButton value="#{texts.refresh}" 
+                                                 action="#{shoppingCartBean.updateQuantity(lineItem.book, lineItem.quantity)}"
+                                                 rendered="#{shoppingCartBean.containBooks()}"/>
+                            </f:facet>
+                            -->
+                        </h:column>
+                        <h:column>
+                            <h:commandButton value="#{texts.removeFromShoppingCart}" action="#{shoppingCartBean.removeBook(lineItem.book)}"/>
+                        </h:column>
+                    </h:dataTable>
+                    <h:outputText value="#{texts.shoppingCartEmpty}" rendered="#{not shoppingCartBean.containBooks()}"/>
+                    <h:panelGrid columns="2">
+                        <h:commandButton value="#{texts.addMoreBooks}" action="#{shoppingCartBean.addMoreBooks()}"/>
+                        <h:commandButton value="#{texts.order}" action="#{orderBean.order()}" rendered="#{shoppingCartBean.containBooks()}"/>
+                    </h:panelGrid>
+                    <h:message for="" styleClass="error"/>
+                </h:panelGrid>
+            </h:form>
+        </ui:composition>
+    </h:body>
+</html>
+

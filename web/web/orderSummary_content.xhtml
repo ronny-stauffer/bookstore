@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jsf/composite/components">
+    
+    <h:body>
+        <ui:composition>
+            <h:form>
+                <c:orderDetails
+                    address="#{orderBean.address}"
+                    creditCard="#{orderBean.creditCard}"
+                    lineItems="#{shoppingCartBean.lineItems}"
+                    amount="#{shoppingCartBean.amount}"/>
+                <h:panelGrid columns="3">
+                    <h:commandButton value="#{texts.changeAddress}" action="#{orderBean.changeAddress}"/>
+                    <h:commandButton value="#{texts.changeCreditCard}" action="#{orderBean.changeCreditCard}"/>
+                    <h:commandButton value="#{texts.submit}" action="#{orderBean.submit}"/>
+                </h:panelGrid>
+                <h:messages styleClass="error"/>
+            </h:form>
+        </ui:composition>
+    </h:body>
+</html>
+

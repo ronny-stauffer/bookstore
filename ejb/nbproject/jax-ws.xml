@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jax-ws xmlns="http://www.netbeans.org/ns/jax-ws/1">
+  <services/>
+  <clients>
+    <client name="AWSECommerceService">
+      <wsdl-url>file:/C:/work/ue56923/_extern/bfh/sp/openid_connect/java/bookstore/ejb/src/conf/wsdl/webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl</wsdl-url>
+      <local-wsdl-file>AWSECommerceService.wsdl</local-wsdl-file>
+      <package-name forceReplace="true">com.amazon.webservices</package-name>
+      <catalog-file>catalog.xml</catalog-file>
+      <binding>
+        <file-name>AWSECommerceService_handler.xml</file-name>
+      </binding>
+      <handler-binding-file>AWSECommerceService_handler.xml</handler-binding-file>
+      <wsimport-options>
+        <wsimport-option>
+          <wsimport-option-name>extension</wsimport-option-name>
+          <wsimport-option-value>true</wsimport-option-value>
+        </wsimport-option>
+        <wsimport-option>
+          <wsimport-option-name>verbose</wsimport-option-name>
+          <wsimport-option-value>true</wsimport-option-value>
+        </wsimport-option>
+        <wsimport-option>
+          <wsimport-option-name>wsdlLocation</wsimport-option-name>
+          <wsimport-option-value>file:/C:/work/ue56923/_extern/bfh/sp/openid_connect/java/bookstore/ejb/src/conf/wsdl/webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl</wsimport-option-value>
+        </wsimport-option>
+        <wsimport-option>
+          <wsimport-option-name>xnocompile</wsimport-option-name>
+          <wsimport-option-value>true</wsimport-option-value>
+        </wsimport-option>
+        <wsimport-option>
+          <wsimport-option-name>xendorsed</wsimport-option-name>
+          <wsimport-option-value>true</wsimport-option-value>
+        </wsimport-option>
+        <wsimport-option>
+          <wsimport-option-name>package</wsimport-option-name>
+          <wsimport-option-value>com.amazon.webservices</wsimport-option-value>
+        </wsimport-option>
+      </wsimport-options>
+    </client>
+  </clients>
+</jax-ws>

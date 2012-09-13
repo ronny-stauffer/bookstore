@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<facelet-taglib version="2.0"
+    xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+        http://java.sun.com/xml/ns/javaee/web-facelettaglibrary_2_0.xsd">
+
+    <namespace>http://books.org/jsf/taglib</namespace>
+    <tag>
+        <tag-name>validateCreditCard</tag-name>
+        <validator>
+            <validator-id>org.books.CreditCardValidator</validator-id>
+        </validator>
+    </tag>
+    <tag>
+        <tag-name>dateInput</tag-name>
+        <component>
+            <component-type>org.books.DateInput</component-type>
+            <renderer-type>org.books.DateInputRenderer</renderer-type>
+            <handler-class>org.books.presentation.DateInputTagHandler</handler-class>
+        </component>
+    </tag>
+</facelet-taglib>

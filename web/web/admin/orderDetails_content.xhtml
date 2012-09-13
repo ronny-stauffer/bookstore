@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jsf/composite/components">
+    
+    <h:body>
+        <ui:composition>
+            <h:form rendered="#{ordersBean.selectedOrder ne null}">
+                <c:orderDetails
+                    date="#{ordersBean.selectedOrder.date}"
+                    status="#{ordersBean.getOrderStatus(ordersBean.selectedOrder)}"
+                    address="#{ordersBean.selectedOrder.address}"
+                    creditCard="#{ordersBean.selectedOrder.creditCard}"
+                    lineItems="#{ordersBean.selectedOrder.items}"
+                    amount="#{ordersBean.selectedOrder.amount}"/>
+                <h:commandButton action="#{ordersBean.closeOrderDetails}" value="#{texts.back}"/>
+            </h:form>
+            <h:outputText value="#{texts.noOrderSelected}" rendered="#{ordersBean.selectedOrder eq null}"/>
+        </ui:composition>
+    </h:body>
+</html>
+

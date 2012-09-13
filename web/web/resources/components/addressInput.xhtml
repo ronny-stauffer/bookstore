@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jsf/composite">
+    
+    <c:interface>
+        <c:attribute name="name"/>
+        <c:attribute name="street"/>
+        <c:attribute name="city"/>
+        <c:attribute name="zip"/>
+        <c:attribute name="country"/>
+        <c:attribute name="countries"/>
+    </c:interface>
+    
+    <c:implementation>
+        <h:panelGrid columns="3">
+            <h:outputText value="#{texts.name}"/>
+            <h:inputText id="name" label="name" value="#{cc.attrs.name}" size="30"/>
+            <h:message for="name" styleClass="error"/>
+
+            <h:outputText value="#{texts.street}"/>
+            <h:inputText id="street" label="strasse" value="#{cc.attrs.street}" size="30"/>
+            <h:message for="street" styleClass="error"/>
+            
+            <h:outputText value="#{texts.city}"/>
+            <h:inputText id="city" label="city" value="#{cc.attrs.city}" size="30"/>
+            <h:message for="city" styleClass="error"/>
+
+            <h:outputText value="#{texts.zip}"/>
+            <h:inputText id="zip" label="zip" value="#{cc.attrs.zip}" size="6"/>
+            <h:message for="zip" styleClass="error"/>
+
+            <h:outputText value="#{texts.country}"/>
+            <h:selectOneMenu id="country" label="country" value="#{cc.attrs.country}">
+                <f:selectItems value="#{cc.attrs.countries}"/>
+            </h:selectOneMenu>
+            <h:message for="country" styleClass="error"/>
+        </h:panelGrid>
+    </c:implementation>
+</html>
+

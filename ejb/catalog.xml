@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="http://webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl" uri="src/conf/xml-resources/web-service-references/AWSECommerceService/wsdl/webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl"/>
+    <system systemId="file:/C:/work/ue56923/_extern/bfh/sp/openid_connect/java/bookstore/ejb/src/conf/wsdl/webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl" uri="src/conf/xml-resources/web-service-references/AWSECommerceService/wsdl/AWSECommerceService.wsdl"/>
+</catalog>

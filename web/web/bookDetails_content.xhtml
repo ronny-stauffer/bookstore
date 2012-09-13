@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+    
+    <h:body>
+        <ui:composition>
+            <h:form rendered="#{catalogBean.selectedBook ne null}">
+                <h:panelGrid columns="2">
+                    <h:outputText value="#{texts.isbn}"/>
+                    <h:outputText value="#{catalogBean.selectedBook.isbn}"/>
+
+                    <h:outputText value="#{texts.title}"/>
+                    <h:outputText value="#{catalogBean.selectedBook.title}"/>
+
+                    <h:outputText value="#{texts.authors}"/>
+                    <h:outputText value="#{catalogBean.selectedBook.authors}"/>
+
+                    <h:outputText value="#{texts.publicationDate}"/>
+                    <h:outputText value="#{catalogBean.selectedBook.date}">
+                        <f:convertDateTime type="date" dateStyle="short"/>
+                    </h:outputText>
+
+                    <h:outputText value="#{texts.binding}"/>
+                    <h:outputText value="#{catalogBean.selectedBook.binding}"/>
+
+                    <h:outputText value="#{texts.numberPages}"/>
+                    <h:outputText value="#{catalogBean.selectedBook.pages}"/>
+
+                    <h:outputText value="#{texts.price}"/>
+                    <h:outputText value="#{currency.currency} #{catalogBean.selectedBook.price}">
+                        <f:convertNumber pattern="#,##00.00"/>
+                    </h:outputText>
+                    <h:commandButton value="#{texts.addToShoppingCart}" action="#{shoppingCartBean.addBook(catalogBean.selectedBook)}"/>
+                    <h:outputLabel/>
+                    <h:commandButton action="searchResults" value="#{texts.back}"/>
+                    <h:outputLabel/>
+                </h:panelGrid>
+            </h:form>
+            <h:outputText value="#{texts.noBookSelected}" rendered="#{catalogBean.selectedBook eq null}"/>
+        </ui:composition>
+    </h:body>
+</html>
+

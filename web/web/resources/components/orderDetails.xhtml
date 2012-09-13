@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jsf/composite">
+    
+    <c:interface>
+        <c:attribute name="date"/>
+        <c:attribute name="status"/>
+        <c:attribute name="address"/>
+        <c:attribute name="creditCard"/>
+        <c:attribute name="lineItems"/>
+        <c:attribute name="amount"/>
+    </c:interface>
+    
+    <c:implementation>
+        <h:panelGroup rendered="#{cc.attrs.date ne null}">
+            <h:outputText value="#{texts.date}:"/>
+            <h:outputText value="#{cc.attrs.date}">
+                <f:convertDateTime type="date" dateStyle="short"/>
+            </h:outputText>
+            <br/>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{cc.attrs.status ne null}">
+            <h:outputText value="#{texts.status}: #{cc.attrs.status}"/>
+            <br/>
+            <br/>
+        </h:panelGroup>
+        <h:panelGrid columns="2">
+            <h:outputText value="#{texts.address}"/>
+            <h:panelGroup>
+                <h:outputText value="#{cc.attrs.address.name}"/>
+                <br/>
+                <h:outputText value="#{cc.attrs.address.street}"/>
+                <br/>
+                <h:outputText value="#{cc.attrs.address.country}-#{cc.attrs.address.zip} #{cc.attrs.address.city}"/>
+            </h:panelGroup>
+            <h:outputText value="#{texts.creditCard}"/>
+            <h:panelGroup>
+                <h:outputText value="#{cc.attrs.creditCard.type}"/>
+                <br/>
+                <h:outputText value="#{cc.attrs.creditCard.number}"/>
+                <br/>
+                <h:outputText value="#{cc.attrs.creditCard.expiration}">
+                    <f:convertDateTime pattern="MM-yyyy"/>
+                </h:outputText>
+            </h:panelGroup>
+        </h:panelGrid>
+        <h:dataTable value="#{cc.attrs.lineItems}" var="lineItem">
+            <h:column>
+                <f:facet name="header">
+                    <h:outputText value="#{texts.title}"/>
+                </f:facet>
+                <h:outputText value="#{lineItem.book.title}"/>
+            </h:column>
+            <h:column>
+                <f:facet name="header">
+                    <h:outputText value="#{texts.price}"/>
+                </f:facet>
+                <h:outputText value="#{currency.currency} #{lineItem.book.price}">
+                    <f:convertNumber pattern="#,##00.00"/>
+                </h:outputText>
+                <f:facet name="footer">
+                    <h:outputText value="#{currency.currency} #{cc.attrs.amount}">
+                        <f:convertNumber pattern="#,##00.00"/>
+                    </h:outputText>
+                </f:facet>
+            </h:column>
+            <h:column>
+                <f:facet name="header">
+                    <h:outputText value="#{texts.quantity}"/>
+                </f:facet>
+                <h:outputText value="#{lineItem.quantity}"/>
+            </h:column>
+        </h:dataTable>
+    </c:implementation>
+</html>
+

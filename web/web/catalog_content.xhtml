@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+    
+    <h:body>
+        <ui:composition>
+            <h:form>
+                <h:panelGrid columns="2">
+                    <h:outputText value="#{texts.title}"/>
+                    <h:inputText id="title" label="title" value="#{catalogBean.title}"/>
+                    
+                    <h:outputText value="#{texts.author}"/>
+                    <h:inputText id="author" label="author" value="#{catalogBean.author}"/>
+                    
+                    <h:outputText value="#{texts.publisher}"/>
+                    <h:inputText id="publisher" label="publisher" value="#{catalogBean.publisher}"/>
+                    
+                    <h:commandButton value="#{texts.search}" action="#{catalogBean.searchBooks}">
+                        <f:setPropertyActionListener target="#{navigationBean.lastPage}" value="back_to_index"/>
+                    </h:commandButton>
+                </h:panelGrid>
+                <h:messages styleClass="error"/>
+            </h:form>
+        </ui:composition>
+    </h:body>
+</html>
+

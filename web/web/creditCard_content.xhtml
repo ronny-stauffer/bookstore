@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://books.org/jsf/taglib">
+    
+    <h:body>
+        <h:form id="creditCardForm">
+            <h:panelGrid columns="3">
+                <h:outputText value="#{texts.creditCardType}"/>
+                <h:selectOneMenu id="cardType" value="#{orderBean.creditCard.type}">
+                    <f:selectItems value="#{orderBean.cardTypes}"/>
+                </h:selectOneMenu>
+                <h:message for="cardType" styleClass="error"/>
+
+                <h:outputText value="#{texts.creditCardNumber}"/>
+                <h:inputText id="cardNumber" value="#{orderBean.creditCard.number}" size="20">
+                    <b:validateCreditCard cardTypeId="cardType"/>
+                </h:inputText>
+                <h:message for="cardNumber" styleClass="error"/>
+
+                <h:outputText value="#{texts.expirationDate}"/>
+                <b:dateInput id="cardExpiration" name="cardExpiration" numYears="10" value="#{orderBean.creditCard.expiration}"/>
+                <h:message for="cardExpiration" styleClass="error"/>
+            </h:panelGrid>
+            <h:commandButton value="#{texts.continue}" action="#{orderBean.summary}"/>
+        </h:form>
+    </h:body>
+</html>
+

@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:c="http://java.sun.com/jsf/composite/components">
+    
+    <h:body>
+        <h:form id="addressForm">
+            <c:addressInput 
+                name="#{orderBean.address.name}" 
+                street="#{orderBean.address.street}" 
+                zip="#{orderBean.address.zip}" 
+                city="#{orderBean.address.city}" 
+                country="#{orderBean.address.country}" 
+                countries="#{orderBean.countries}"/>
+            <h:commandButton value="#{texts.continue}" action="#{orderBean.creditCardInput}"/>
+        </h:form>
+    </h:body>
+</html>
+

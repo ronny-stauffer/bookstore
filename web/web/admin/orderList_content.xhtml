@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+    
+    <h:body>
+        <ui:composition>
+            <h:form>
+                <h:dataTable value="#{ordersBean.orders}" var="order" cellspacing="3" cellpadding="0" rendered="#{ordersBean.hasOrders()}">
+                    <h:column>
+                        <f:facet name="header">
+                            <h:outputText value="#{texts.number}"/>
+                        </f:facet>
+                        <h:commandLink value="#{order.number}" action="#{ordersBean.selectOrder(order)}"/>
+                    </h:column>
+                    <h:column>
+                        <f:facet name="header">
+                            <h:outputText value="#{texts.date}"/>
+                        </f:facet>
+                        <h:outputText value="#{order.date}">
+                            <f:convertDateTime type="date" dateStyle="short"/>
+                        </h:outputText>
+                    </h:column>
+                    <h:column>
+                        <f:facet name="header">
+                            <h:outputText value="#{texts.amount}"/>
+                        </f:facet>
+                        <h:outputText value="#{currency.currency} #{order.amount}">
+                            <f:convertNumber pattern="#,##00.00"/>
+                        </h:outputText>
+                    </h:column>
+                    <h:column>
+                        <f:facet name="header">
+                            <h:outputText value="#{texts.status}"/>
+                        </f:facet>
+                        <h:outputText value="#{ordersBean.getOrderStatus(order)}"/>
+                    </h:column>
+                    <h:column>
+                        <h:commandButton value="#{texts.cancel}" action="#{ordersBean.cancelOrder(order)}" disabled="#{order.status ne 'open'}"/>
+                    </h:column>
+                </h:dataTable>
+                <h:panelGroup rendered="#{not ordersBean.hasOrders()}">
+                    <h:outputText value="#{texts.noOrders}"/>
+                    <br/>
+                    <br/>
+                </h:panelGroup>
+                <h:commandButton action="#{ordersBean.closeOrderList}" value="#{texts.back}"/>
+                <h:messages styleClass="error"/>
+            </h:form>
+        </ui:composition>
+    </h:body>
+</html>
+

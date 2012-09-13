@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+
+    <h:body>
+        <ui:composition>
+            <h:form>
+                <h:panelGrid columns="1">
+                    
+                    <h:dataTable value="#{catalogBean.bookResults}" var="book" rendered="#{not catalogBean.bookResultsEmpty()}">
+                        <h:column>
+                            <f:facet name="header">
+                                <h:outputText value="#{texts.title}"/>
+                            </f:facet>
+                            <h:commandLink value="#{book.title}" action="#{catalogBean.selectBook(book)}"/>
+                        </h:column>
+                        <h:column>
+                            <f:facet name="header">
+                                <h:outputText value="#{texts.price}"/>
+                            </f:facet>
+                            <h:outputText value="#{currency.currency} #{book.price}">
+                                <f:convertNumber pattern="#,##00.00"/>
+                            </h:outputText>
+                        </h:column>
+                        <h:column>
+                            <h:outputText value=""/>
+                            <h:commandButton value="#{texts.addToShoppingCart}" action="#{shoppingCartBean.addBook(book)}"/>
+                        </h:column>
+                    </h:dataTable>
+                    <h:panelGroup rendered="#{catalogBean.bookResultsEmpty()}">
+                        <h:outputText value="#{texts.noBooksFound}"/>
+                        <br/>
+                        <br/>
+                    </h:panelGroup>
+                    <h:commandButton action="catalog" value="#{texts.back}"/>
+                </h:panelGrid>
+            </h:form>
+        </ui:composition>
+    </h:body>
+</html>
+
