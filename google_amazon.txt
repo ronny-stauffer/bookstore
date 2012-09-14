@@ -1,0 +1,8 @@
+Google Account Settings
+https://www.google.com/settings/account
+
+Google APIs Console
+https://code.google.com/apis/console/
+
+Amazon Web Services
+	Product Advertising API
