@@ -22,6 +22,7 @@
                         <f:setPropertyActionListener target="#{navigationBean.lastPage}" value="back_to_index"/>
                     </h:commandButton>
                 </h:panelGrid>
+                <h:outputText value="#{login.loginMessage}" style="color:rgb(255, 0, 0)"/>
                 <h:messages styleClass="error"/>
             </h:form>
         </ui:composition>

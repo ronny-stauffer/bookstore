@@ -13,6 +13,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +32,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.core.MediaType;
 import org.books.presentation.MessageFactory;
+import org.books.presentation.login.User;
 import org.books.presentation.navigation.Navigation;
 
 /**
@@ -120,12 +122,14 @@ public class LoginBean {
      */
     public static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
     
-    public static final String PROVIDER_CONFIGURATION_SESSION_ATTRIBUTE_NAME = "openIdConnectProviderConfiguration";
+    public static final String PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY = "openIdConnectProviderConfiguration";
+    public static final String USER_LOGIN_CONTEXT_KEY = "user";
+    public static final String LOGIN_MESSAGE_LOGIN_CONTEXT_KEY = "loginMessage";
     
     private static final Logger LOGGER = Logger.getLogger(LoginBean.class.getName());
     
     @PersistenceContext(unitName = "openIDConnect")
-    private EntityManager em;
+    private EntityManager entityManager;
     
     @NotNull
     @Size(min = 1, max = 100)
@@ -153,8 +157,43 @@ public class LoginBean {
         }
     }
     
+    public boolean getIsLoggedIn() {
+        return FacesContext.getCurrentInstance().getExternalContext().getSessionMap().containsKey(USER_LOGIN_CONTEXT_KEY);
+    }
+    
+    public String getLoggedInLabel() {
+        if (!getIsLoggedIn()) {
+            throw new IllegalStateException("Nobody is logged in!");
+        }
+        
+        String loggedInLabel;
+        
+        User user = (User)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(USER_LOGIN_CONTEXT_KEY);
+        loggedInLabel = String.format("%s %s", user.getFirstName(), user.getLastName());
+        
+        return loggedInLabel;
+    }
+    
     public String login() {
         return Navigation.login();
+    }
+    
+    public String logout() {
+        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(USER_LOGIN_CONTEXT_KEY);
+        
+        return null;
+    }
+    
+    public String getLoginMessage() {
+        String loginMessage = null;
+        
+        Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
+        if (sessionMap.containsKey(LOGIN_MESSAGE_LOGIN_CONTEXT_KEY)) {
+            loginMessage = (String)sessionMap.get(LOGIN_MESSAGE_LOGIN_CONTEXT_KEY);
+            sessionMap.remove(LOGIN_MESSAGE_LOGIN_CONTEXT_KEY);
+        }
+        
+        return loginMessage;
     }
         
     private class InvalidOpenIDConnectIdentifierException extends Exception {
@@ -279,33 +318,37 @@ public class LoginBean {
                 MessageFactory.info("org.books.Bookstore.INVALID_OPENID_CONNECT_IDENTIFIER");
             }
         }
+        openIDConnectIdentifier = null;
         
         LOGGER.info(String.format("Provider Registration Endpoint: %s", providerConfiguration.registration_endpoint));
         LOGGER.info(String.format("Provider Authorization Endpoint: %s", providerConfiguration.authorization_endpoint));
         LOGGER.info(String.format("Provider Token Endpoint: %s", providerConfiguration.token_endpoint));
         LOGGER.info(String.format("Provider Userinfo Endpoint: %s", providerConfiguration.userinfo_endpoint));
         
-        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put(PROVIDER_CONFIGURATION_SESSION_ATTRIBUTE_NAME, providerConfiguration);
+        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put(PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY, providerConfiguration);
 
         ClientRegistration clientRegistration = getClientRegistration(providerConfiguration);
+        if (clientRegistration == null) {
+            clientRegistration = performDynamicClientRegistration(providerConfiguration);
+        }
         
         String authorizationRequestURL = null;
         try {
-            WebResource authorization = client.resource(providerConfiguration.authorization_endpoint)
+            WebResource authorizationResource = client.resource(providerConfiguration.authorization_endpoint)
                 .queryParam("response_type", CODE_AUTHORIZATION_RESPONSE_TYPE)
                 .queryParam("client_id", clientRegistration.getClientIdentifier())
                 .queryParam("redirect_uri", URLEncoder.encode(CALLBACK_URI, "utf-8"))
                 .queryParam("scope", OPENID_AUTHORIZATION_SCOPE + " " + PROFILE_AUTHORIZATION_SCOPE /* + " " + ADDRESS_AUTHORIZATION_SCOPE */ + " " + EMAIL_AUTHORIZATION_SCOPE)
                 .queryParam("state", AUTHORIZATION_STATE_VALUE);
             if (WENOU_ISSUER.equals(providerConfiguration.issuer)) {
-                authorization = authorization
+                authorizationResource = authorizationResource
                     .queryParam("nonce", "123"); // Required for Wenou altough optional according to the OpenID Connect specification
             }
             //if (OXAUTH_ISSUER.equals(providerConfiguration.issuer)) {
                 //authorization = authorization
                 //    .queryParam("request", "abc");
             //}
-            authorizationRequestURL = authorization
+            authorizationRequestURL = authorizationResource
                 .getURI().toURL().toString();
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -326,61 +369,76 @@ public class LoginBean {
     }
     
     /**
-     * Gets the client registration for the given issuer, either by using hardcoded values, by doing a registration store lookup or by performing a dynamic client registration.
-     * @param issuer
+     * Gets a valid client registration for the specified provider, either by using hardcoded values or by doing a lookup in the registration store.
+     * @param providerConfiguration
      * @return 
      */
     public ClientRegistration getClientRegistration(ProviderConfiguration providerConfiguration) {
+        if (providerConfiguration == null) {
+            throw new NullPointerException("providerConfiguration must not be null!");
+        }
+        
+        ClientRegistration clientRegistration = null;
+        
         if (GOOGLE_ISSUER.equals(providerConfiguration.issuer)) {
-            //ClientRegistration clientRegistration = new ClientRegistration();
-            ClientRegistration clientRegistration = ClientRegistration.create(GOOGLE_ISSUER);
+            clientRegistration = new ClientRegistrationRepository(entityManager).create(GOOGLE_ISSUER);
             clientRegistration.setClientIdentifier(CLIENT_IDENTIFIER_FOR_GOOGLE);
             clientRegistration.setClientSecret(CLIENT_SECRET_FOR_GOOGLE);
-            
-            return clientRegistration;
         } else {
-            ClientRegistration clientRegistration = null;
-            try {
-                clientRegistration = em.createQuery("select clientRegistration from ClientRegistration clientRegistration where clientRegistration.issuer = :issuer", ClientRegistration.class)
-                    .setParameter("issuer", providerConfiguration.issuer)
-                    .getSingleResult();
-            } catch (NoResultException e) {
-                // Ignore exception
-            }
-            if (clientRegistration != null) {
-                return clientRegistration;
-            } else {
-                // Perform Dynamic Client Registration
-                Client client = Client.create();
-                try {
-                    clientRegistration = client.resource(providerConfiguration.registration_endpoint)
-                        //.queryParam("type", "client_associate")
-                        //.queryParam("application_name", "Bookstore") // Required for oxAuth altough optional according to the OpenID Connect specification
-                        //.queryParam("application_type", "web") // Required for oxAuth altough optional according to the OpenID Connect specification
-                        //.queryParam("redirect_uris", URLEncoder.encode(CALLBACK_URI, "utf-8"))
-                        //.queryParam("logo_url", URLEncoder.encode(LOGO_URL, "utf-8"))
-                        ////.queryParam("user_id_type", "pairwise")
-                        //.queryParam("token_endpoint_auth_type", "client_secret_basic")
-                        .type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
-                        .accept(MediaType.APPLICATION_JSON_TYPE)
-                        .post(ClientRegistration.class,
-                                "type=client_associate" + "&"
-                                + "application_name=" + APPLICATION_NAME + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
-                                + "application_type=" + WEB_APPLICATION_TYPE + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
-                                + "redirect_uris=" + URLEncoder.encode(CALLBACK_URI, "utf-8") + "&"
-                                + "logo_url=" + URLEncoder.encode(LOGO_URL, "utf-8") + "&"
-                                //+ "user_id_type=pairwise" + "&"
-                                + "token_endpoint_auth_type=client_secret_basic"
-                            );
-                        
-                    LOGGER.info(String.format("Client Registration Client Identifier: %s", clientRegistration.getClientIdentifier()));
-                    LOGGER.info(String.format("Client Registration Client Secret: %s", clientRegistration.getClientSecret()));
-                    
-                    return clientRegistration;
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+//            try {
+//                clientRegistration = em.createQuery("select clientRegistration from ClientRegistration clientRegistration where clientRegistration.issuer = :issuer", ClientRegistration.class)
+//                    .setParameter("issuer", providerConfiguration.issuer)
+//                    .getSingleResult();
+//            } catch (NoResultException e) {
+//                // Ignore exception
+//            }
+            clientRegistration = new ClientRegistrationRepository(entityManager).findValid(providerConfiguration.issuer);
         }
+        
+        return clientRegistration;
+    }
+    
+    /**
+     * Performs a dynamic client registration.
+     * @return 
+     */
+    private ClientRegistration performDynamicClientRegistration(ProviderConfiguration providerConfiguration) {
+        assert providerConfiguration != null;
+        
+        ClientRegistration clientRegistration = null;
+
+        Client client = Client.create();
+        try {
+            clientRegistration = client.resource(providerConfiguration.registration_endpoint)
+                //.queryParam("type", "client_associate")
+                //.queryParam("application_name", "Bookstore") // Required for oxAuth altough optional according to the OpenID Connect specification
+                //.queryParam("application_type", "web") // Required for oxAuth altough optional according to the OpenID Connect specification
+                //.queryParam("redirect_uris", URLEncoder.encode(CALLBACK_URI, "utf-8"))
+                //.queryParam("logo_url", URLEncoder.encode(LOGO_URL, "utf-8"))
+                ////.queryParam("user_id_type", "pairwise")
+                //.queryParam("token_endpoint_auth_type", "client_secret_basic")
+                .type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE)
+                .post(ClientRegistration.class,
+                        "type=client_associate" + "&"
+                        + "application_name=" + APPLICATION_NAME + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
+                        + "application_type=" + WEB_APPLICATION_TYPE + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
+                        + "redirect_uris=" + URLEncoder.encode(CALLBACK_URI, "utf-8") + "&"
+                        + "logo_url=" + URLEncoder.encode(LOGO_URL, "utf-8") + "&"
+                        //+ "user_id_type=pairwise" + "&"
+                        + "token_endpoint_auth_type=client_secret_basic"
+                    );
+
+            LOGGER.info(String.format("Client Registration Client Identifier: %s", clientRegistration.getClientIdentifier()));
+            LOGGER.info(String.format("Client Registration Client Secret: %s", clientRegistration.getClientSecret()));
+            
+            clientRegistration.setIssuer(providerConfiguration.issuer);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        
+        new ClientRegistrationRepository(entityManager).update(clientRegistration);
+        
+        return clientRegistration;
     }
 }

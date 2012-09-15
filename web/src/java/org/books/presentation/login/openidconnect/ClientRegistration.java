@@ -4,11 +4,14 @@
  */
 package org.books.presentation.login.openidconnect;
 
+import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -51,7 +54,13 @@ public class ClientRegistration /* implements Serializable */ {
     @XmlElement(name="client_secret")
     @Size(min = 1, max = 100)
     @Column(nullable = false, length = 100)
-    private String clientSecret;    
+    private String clientSecret;
+    
+    @NotNull
+    @XmlElement(name="expires_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false)
+    private Date expiration;
     
     // Non-Public API
     // Standard Constructor required by JPA
@@ -60,21 +69,12 @@ public class ClientRegistration /* implements Serializable */ {
     public ClientRegistration() {
         
     }
-    
-    // Public API!
-    // Factory Method zum Create einer neuen Instanz.
-    public static ClientRegistration create(String issuer) {
-        if (issuer == null) {
-            throw new NullPointerException("issuer must not be null!");
-        }
-        if (issuer.isEmpty()) {
-            throw new IllegalArgumentException("issuer must not be empty!");
-        }
+
+    // Non-Public API
+    public ClientRegistration(String issuer) {
+        assert (issuer != null && !issuer.isEmpty());
         
-        ClientRegistration clientRegistration = new ClientRegistration();
-        clientRegistration.issuer = issuer;
-        
-        return clientRegistration;
+        this.issuer = issuer;
     }
     
     // Non-Public API
@@ -84,6 +84,16 @@ public class ClientRegistration /* implements Serializable */ {
         return id;
     }
 
+    // Business Key
+    public String getIssuer() {
+        return issuer;
+    }
+    
+    // Diesen Setter gibt es nur deshalb, weil diese Entity auch gleichzeitig eine Value Object ist (aus Gründen der Einfachkeit).
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+    
     public String getClientIdentifier() {
         return clientIdentifier;
     }
@@ -98,6 +108,14 @@ public class ClientRegistration /* implements Serializable */ {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+    
+    public Date getExpiration() {
+        return expiration;
+    }
+    
+    public void setExpiration(Date expiration) {
+        this.expiration = expiration;
     }
     
     @Override

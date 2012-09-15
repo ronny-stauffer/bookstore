@@ -27,7 +27,15 @@
             </h:form>
         </h:panelGroup>
         <h:form>
-            <h:commandLink action="#{login.login}" value="#{texts.login}"/> <!-- disabled="..." -->
+            <h:panelGroup rendered="#{not login.isLoggedIn}">
+                <h:commandLink action="#{login.login}" value="#{texts.login}"/>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{login.isLoggedIn}">
+                <h:outputText value="#{login.loggedInLabel}"/>
+                <h:outputText value=" ("/>
+                <h:commandLink action="#{login.logout}" value="#{texts.logout}"/>
+                <h:outputText value=")"/>
+            </h:panelGroup>
         </h:form>
     </h:panelGrid>
     <p>

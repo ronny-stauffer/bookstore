@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.SessionScoped;
+import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 import org.books.business.OrderManagerLocal;
 import org.books.common.data.Address;
@@ -15,6 +17,8 @@ import org.books.common.data.CreditCard;
 import org.books.common.data.Order;
 import org.books.common.exception.CreditCardExpiredException;
 import org.books.common.exception.MissingLineItemsException;
+import org.books.presentation.login.User;
+import org.books.presentation.login.openidconnect.LoginBean;
 import org.books.presentation.navigation.Navigation;
 
 /**
@@ -43,6 +47,16 @@ public class OrderBean {
         cardTypes = initCardTypes();
 
         address = new Address();
+        
+        Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
+        if (sessionMap.containsKey(LoginBean.USER_LOGIN_CONTEXT_KEY)) {
+            User user = (User)sessionMap.get(LoginBean.USER_LOGIN_CONTEXT_KEY);
+            if (user.getEMailAddress() != null) {
+                address.seteMailAddress(user.getEMailAddress());
+            }
+        }
+        
+        
         creditCard = new CreditCard();
     }
 
