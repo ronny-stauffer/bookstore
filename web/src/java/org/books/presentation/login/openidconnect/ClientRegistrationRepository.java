@@ -1,6 +1,7 @@
 package org.books.presentation.login.openidconnect;
 
 import java.util.Calendar;
+import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 
@@ -9,6 +10,8 @@ import javax.persistence.NoResultException;
  * @author Ronny Stauffer
  */
 public class ClientRegistrationRepository {
+    private static final Logger LOGGER = Logger.getLogger(ClientRegistrationRepository.class.getName());
+    
     private final EntityManager entityManager;
     
     public ClientRegistrationRepository(EntityManager entityManager) {
@@ -58,8 +61,8 @@ public class ClientRegistrationRepository {
         ClientRegistration clientRegistration = find(issuer);
         if (clientRegistration != null) {
             Calendar timestamp = Calendar.getInstance();
-            timestamp.add(Calendar.HOUR_OF_DAY, 1);
-            if (timestamp.getTime().before(clientRegistration.getExpiration())) {
+            if (clientRegistration.getExpiration() == null
+                    || timestamp.getTime().before(clientRegistration.getExpiration())) {
                 validClientRegisration = clientRegistration;
             }
         }

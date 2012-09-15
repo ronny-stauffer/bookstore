@@ -56,10 +56,8 @@ public class ClientRegistration /* implements Serializable */ {
     @Column(nullable = false, length = 100)
     private String clientSecret;
     
-    @NotNull
     @XmlElement(name="expires_at")
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false)
     private Date expiration;
     
     // Non-Public API

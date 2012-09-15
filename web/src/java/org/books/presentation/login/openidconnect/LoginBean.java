@@ -12,11 +12,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Resource;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.ExternalContext;
@@ -26,8 +28,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.transaction.UserTransaction;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.core.MediaType;
@@ -130,6 +132,9 @@ public class LoginBean {
     
     @PersistenceContext(unitName = "openIDConnect")
     private EntityManager entityManager;
+    
+    @Resource
+    UserTransaction transaction;
     
     @NotNull
     @Size(min = 1, max = 100)
@@ -328,7 +333,15 @@ public class LoginBean {
         FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put(PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY, providerConfiguration);
 
         ClientRegistration clientRegistration = getClientRegistration(providerConfiguration);
-        if (clientRegistration == null) {
+           
+        Calendar timestamp = Calendar.getInstance();
+        timestamp.add(Calendar.HOUR_OF_DAY, 1);
+            
+        LOGGER.info(String.format("Timestamp for Client Registration expiration check: %s", timestamp.getTime()));
+        
+        if (clientRegistration == null
+                || (clientRegistration.getExpiration() != null
+                    && !timestamp.getTime().before(clientRegistration.getExpiration()))) {
             clientRegistration = performDynamicClientRegistration(providerConfiguration);
         }
         
@@ -428,16 +441,39 @@ public class LoginBean {
                         //+ "user_id_type=pairwise" + "&"
                         + "token_endpoint_auth_type=client_secret_basic"
                     );
+            
+            if (clientRegistration.getExpiration() != null) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(clientRegistration.getExpiration());
+                if (calendar.get(Calendar.YEAR) > 9999) {
+                    clientRegistration.setExpiration(null);
+                }
+            }
 
             LOGGER.info(String.format("Client Registration Client Identifier: %s", clientRegistration.getClientIdentifier()));
             LOGGER.info(String.format("Client Registration Client Secret: %s", clientRegistration.getClientSecret()));
+            LOGGER.info(String.format("Client Registration Client Expiration: %s", clientRegistration.getExpiration() != null ? clientRegistration.getExpiration() : "<No expiration>"));
             
             clientRegistration.setIssuer(providerConfiguration.issuer);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
         
-        new ClientRegistrationRepository(entityManager).update(clientRegistration);
+        try {
+            transaction.begin();
+            
+            new ClientRegistrationRepository(entityManager).update(clientRegistration);
+
+            transaction.commit();
+        } catch (Exception e) {
+            try {
+                transaction.rollback();
+            } catch (Exception e2) {
+                // Ignore exception
+            }
+            
+            throw new RuntimeException(e);
+        }        
         
         return clientRegistration;
     }

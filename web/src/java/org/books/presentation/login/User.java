@@ -36,9 +36,10 @@ public class User {
             }
             
             public Builder2 eMailAddress(String eMailAddress) {
-//                if (eMailAddress == null) {
-//                    throw new NullPointerException("eMailAddress must not be null!");
-//                }
+                if (eMailAddress == null) {
+                    return this;
+                    //throw new NullPointerException("eMailAddress must not be null!");
+                }
                 if (eMailAddress.isEmpty()) {
                     throw new IllegalArgumentException("eMailAddress must not be empty!");
                 }

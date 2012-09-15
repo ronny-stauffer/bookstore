@@ -31,11 +31,12 @@ import com.sun.jersey.api.client.WebResource.Builder;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
 import javax.mail.internet.ContentType;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -192,7 +193,7 @@ public class LoginCallbackServlet extends HttpServlet {
         String tokenHTTPResponseBody = client.resource(providerConfiguration.token_endpoint)
             .type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
             .accept(MediaType.APPLICATION_JSON_TYPE)
-            .header("Authorization:", tokenHTTPRequest.getAuthorization())
+            .header("Authorization", tokenHTTPRequest.getAuthorization())
             .post(String.class, tokenHTTPRequest.getQuery());
         
         LOGGER.info(String.format("Token HTTP Response Body: %s", tokenHTTPResponseBody));
@@ -277,17 +278,39 @@ public class LoginCallbackServlet extends HttpServlet {
             LOGGER.info("ID Token is valid.");
             LOGGER.info("User has successfully logged in!");
             
-            User testUser = User
-                    .firstName("John")
-                    .lastName("Doe")
-                    .eMailAddress("john.doe@example.com")
-                    .build();
-            addToLoginContext(request, LoginBean.USER_LOGIN_CONTEXT_KEY, testUser);
+//            User testUser = User
+//                    .firstName("John")
+//                    .lastName("Doe")
+//                    .eMailAddress("john.doe@example.com")
+//                    .build();
+//            addToLoginContext(request, LoginBean.USER_LOGIN_CONTEXT_KEY, testUser);
             
-            /*
-            
-            UserInfoRequest userInfoRequest = new UserInfoRequest(accessToken);
-            Result<UserInfoResponse> result = performRequest("Userinfo", userInfoRequest, providerConfiguration.userinfo_endpoint, UserInfoResponse.class);
+            UserInfoRequest userInfoRequest = new UserInfoRequest(/* Method.POST, */ accessToken);
+            Result<UserInfoResponse> result = performRequest("Userinfo", userInfoRequest, providerConfiguration.userinfo_endpoint, UserInfoResponse.class, new JSONTransformer() {
+                        @Override
+                        public JSONObject transform(JSONObject jsonObject) {
+                            // Map Google's id attribute to the required user_id attribute 
+                            if (jsonObject.containsKey("id")) {
+                                jsonObject.put("user_id", jsonObject.get("id"));
+                                jsonObject.remove("id");
+                            }
+                            
+                            // Remove empty attributes
+                            List<String> keysToRemove = new ArrayList<String>();
+                            for (String key : jsonObject.keySet()) {
+                                Object value = jsonObject.get(key);
+                                if (value instanceof String
+                                        && ((String)value).isEmpty()) {
+                                    keysToRemove.add(key);
+                                }
+                            }
+                            for (String key : keysToRemove) {
+                                jsonObject.remove(key);
+                            }                            
+                            
+                            return jsonObject;
+                        }
+                    });
             if (result.isOK()) {
                 UserInfoResponse userInfoResponse = result.getResponse();
                 UserInfoClaims userInfo = userInfoResponse.getUserInfoClaims();
@@ -315,12 +338,10 @@ public class LoginCallbackServlet extends HttpServlet {
                     .eMailAddress(eMail)
                     .build();
 
-                putToSession(request, LoginBean.USER_SESSION_ATTRIBUTE_NAME, user);
+                addToLoginContext(request, LoginBean.USER_LOGIN_CONTEXT_KEY, user);
             } else {
                 throw new RuntimeException(result.getError());
             }
-            
-            */
         } else {
             LOGGER.info("ID Token is invalid!");
             
@@ -408,7 +429,15 @@ public class LoginCallbackServlet extends HttpServlet {
         }
     }
     
+    private interface JSONTransformer {
+        public JSONObject transform(JSONObject jsonObject);
+    }
+
     private <T> Result<T> performRequest(String requestName, Request request, String endpoint, Class<T> responseType) {
+        return performRequest(requestName, request, endpoint, responseType, null);
+    }
+    
+    private <T> Result<T> performRequest(String requestName, Request request, String endpoint, Class<T> responseType, JSONTransformer jsonTransformer) {
         assert requestName != null && !requestName.isEmpty();
         assert request != null;
         assert endpoint != null && !endpoint.isEmpty();
@@ -421,8 +450,8 @@ public class LoginCallbackServlet extends HttpServlet {
             throw new RuntimeException(e);
         }
         LOGGER.info(String.format("%s HTTP Request Method: %s", requestName, httpRequest.getMethod()));
-        LOGGER.info(String.format("%s HTTP Request Authorization: %s", requestName, httpRequest.getAuthorization()));
-        LOGGER.info(String.format("%s HTTP Request Query: %s", requestName, httpRequest.getQuery()));
+        LOGGER.info(String.format("%s HTTP Request Authorization: %s", requestName, httpRequest.getAuthorization() != null ? httpRequest.getAuthorization() : "<No authorization>"));
+        LOGGER.info(String.format("%s HTTP Request Query: %s", requestName, httpRequest.getQuery() != null ? httpRequest.getQuery() : "<No query>"));
         
         Client client = Client.create();
         if (Method.GET.equals(httpRequest.getMethod())) {
@@ -434,7 +463,7 @@ public class LoginCallbackServlet extends HttpServlet {
             .accept(MediaType.APPLICATION_JSON_TYPE);
         if (httpRequest.getAuthorization() != null) {
             builder = builder
-                .header("Authorization:", httpRequest.getAuthorization());
+                .header("Authorization", httpRequest.getAuthorization());
         }
         String httpResponseBody;
         switch (httpRequest.getMethod()) {
@@ -452,11 +481,23 @@ public class LoginCallbackServlet extends HttpServlet {
         
         LOGGER.info(String.format("%s HTTP Response Body: %s", requestName, httpResponseBody));
         
+        JSONObject jsonObject;
+        try {
+            jsonObject = (JSONObject)JSONValue.parseStrict(httpResponseBody);
+        } catch (net.minidev.json.parser.ParseException e) {
+            throw new RuntimeException(e);
+        }        
+        
+        JSONObject transformedJSONObject = jsonObject;        
+        if (jsonTransformer != null) {
+            transformedJSONObject = jsonTransformer.transform(jsonObject);
+        }
+        
         HTTPResponse httpResponse;
         try {
             httpResponse = new HTTPResponse(200);
             httpResponse.setContentType(new ContentType(MediaType.APPLICATION_JSON)); // We use the application/json type definition from JAX-RS
-            httpResponse.setContent(httpResponseBody);
+            httpResponse.setContent(/* httpResponseBody */ transformedJSONObject.toJSONString());
         } catch (javax.mail.internet.ParseException e) {
             throw new RuntimeException(e);
         }
@@ -465,8 +506,14 @@ public class LoginCallbackServlet extends HttpServlet {
         try {
             java.lang.reflect.Method parseMethod = responseType.getDeclaredMethod("parse", HTTPResponse.class);
             response = (T)parseMethod.invoke(null, httpResponse);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalArgumentException(String.format("Response type '%s' doesn't support HTTP response parsing!", responseType.getName()));
+        } catch (InvocationTargetException e) {
+            if (e.getCause() != null) {
+                throw new RuntimeException(e.getCause());
+            }
+            
+            throw new RuntimeException("Unknown error while parsing HTTP response!", e);
         }
         
         return Result.create(response);
