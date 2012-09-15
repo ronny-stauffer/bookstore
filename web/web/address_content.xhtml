@@ -12,7 +12,8 @@
                 zip="#{orderBean.address.zip}" 
                 city="#{orderBean.address.city}" 
                 country="#{orderBean.address.country}" 
-                countries="#{orderBean.countries}"/>
+                countries="#{orderBean.countries}"
+                eMailAddress="#{orderBean.address.eMailAddress}"/>
             <h:commandButton value="#{texts.continue}" action="#{orderBean.creditCardInput}"/>
         </h:form>
     </h:body>

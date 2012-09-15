@@ -16,7 +16,7 @@
     
     <c:implementation>
         <h:panelGroup rendered="#{cc.attrs.date ne null}">
-            <h:outputText value="#{texts.date}:"/>
+            <h:outputText value="#{texts.date}: "/>
             <h:outputText value="#{cc.attrs.date}">
                 <f:convertDateTime type="date" dateStyle="short"/>
             </h:outputText>
@@ -32,9 +32,13 @@
             <h:panelGroup>
                 <h:outputText value="#{cc.attrs.address.name}"/>
                 <br/>
-                <h:outputText value="#{cc.attrs.address.street}"/>
-                <br/>
+                <h:panelGroup rendered="#{not empty cc.attrs.address.street}">
+                    <h:outputText value="#{cc.attrs.address.street}"/>
+                    <br/>
+                </h:panelGroup>
                 <h:outputText value="#{cc.attrs.address.country}-#{cc.attrs.address.zip} #{cc.attrs.address.city}"/>
+                <br/>
+                <h:outputText value="#{cc.attrs.address.eMailAddress}"/>
             </h:panelGroup>
             <h:outputText value="#{texts.creditCard}"/>
             <h:panelGroup>

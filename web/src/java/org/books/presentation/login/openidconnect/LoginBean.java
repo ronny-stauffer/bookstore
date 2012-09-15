@@ -1,6 +1,7 @@
-package org.books.presentation;
+package org.books.presentation.login.openidconnect;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -10,6 +11,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,9 +30,7 @@ import javax.persistence.PersistenceContext;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.core.MediaType;
-import org.books.presentation.login.openidconnect.ClientRegistration;
-import org.books.presentation.login.openidconnect.ProviderConfiguration;
-import org.books.presentation.login.openidconnect.Issuer;
+import org.books.presentation.MessageFactory;
 import org.books.presentation.navigation.Navigation;
 
 /**
@@ -56,9 +57,11 @@ import org.books.presentation.navigation.Navigation;
  * 
  * @author Ronny Stauffer
  */
-@ManagedBean(name = "login")
+@ManagedBean(name = LoginBean.NAME)
 @SessionScoped
 public class LoginBean {
+    public static final String NAME = "login";
+    
     private static final String GOOGLE_SHORTCUT = "google";
     private static final String GOOGLE_OPENID_CONNECT_IDENTIFIER_REGEX = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@gmail.com";
     private static final String EMAIL_ADDRESS_REGEX = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
@@ -66,11 +69,23 @@ public class LoginBean {
     private static final String HTTPS_SCHEME = "https://";
     //private static final String FRAGMENT_REGEX = "#.*$";
     
-    private static final String CLIENT_IDENTIFIER_FOR_GOOGLE = "486945023370.apps.googleusercontent.com";
-    private static final String CLIENT_SECRET_FOR_GOOGLE = "vvPGiAWvm8s3qzRDHVt-5Z9G";
+    /**
+     * Self-defined identifier
+     */
+    private static final String OPENID4US_SWD_HOST = "connect.openid4.us";
+    private static final String OPENID4US_OPENID_CONNECT_ISSUER_SERVICE_LOCATION = "https://connect.openid4.us/abop";
     
     private static final String GOOGLE_ISSUER = "https://accounts.google.com";
     private static final String GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
+    private static final String GOOGLE_TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
+    private static final String GOOGLE_USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v1/userinfo";
+    private static final String OXAUTH_ISSUER = "http://localhost:8082/oxauth-server-0.3";
+    private static final String WENOU_ISSUER = "https://wenou-test.wenoit.org";
+
+    private static final String CLIENT_IDENTIFIER_FOR_GOOGLE = "486945023370.apps.googleusercontent.com";
+    private static final String CLIENT_SECRET_FOR_GOOGLE = "vvPGiAWvm8s3qzRDHVt-5Z9G";
+    
+    private static final String WEB_APPLICATION_TYPE = "web";
     
     /**
      * Code Authorization Response Type (for Code Flow (Basic Client Profile))
@@ -81,21 +96,31 @@ public class LoginBean {
      * OpenID Authorization Scope (for OpenID Connect request)
      */
     private static final String OPENID_AUTHORIZATION_SCOPE = "openid";
+    private static final String PROFILE_AUTHORIZATION_SCOPE = "profile";
+    private static final String ADDRESS_AUTHORIZATION_SCOPE = "address";
+    private static final String EMAIL_AUTHORIZATION_SCOPE = "email";
     
     /**
      * Authorization State Value
      */
     private static final String AUTHORIZATION_STATE_VALUE = "123";
+
+    /**
+     * Client Application Name
+     */
+    public static final String APPLICATION_NAME = "Bookstore";
     
     /**
      * Client Logo URL
      */
-    private static final String LOGO_URL = "http://dl.dropbox.com/u/42443428/books.jpg";
+    public static final String LOGO_URL = "http://dl.dropbox.com/u/42443428/books.jpg";
     
     /**
      * Client Callback URI
      */
-    private static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
+    public static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
+    
+    public static final String PROVIDER_CONFIGURATION_SESSION_ATTRIBUTE_NAME = "openIdConnectProviderConfiguration";
     
     private static final Logger LOGGER = Logger.getLogger(LoginBean.class.getName());
     
@@ -173,6 +198,8 @@ public class LoginBean {
            providerConfiguration = new ProviderConfiguration();
            providerConfiguration.issuer = GOOGLE_ISSUER;
            providerConfiguration.authorization_endpoint = GOOGLE_AUTHORIZATION_ENDPOINT;
+           providerConfiguration.token_endpoint = GOOGLE_TOKEN_ENDPOINT;
+           providerConfiguration.userinfo_endpoint = GOOGLE_USERINFO_ENDPOINT;
                 
         } else {
             String swdPrincipal;
@@ -224,18 +251,25 @@ public class LoginBean {
                 LOGGER.info(String.format("SWD Host: %s", swdHost));
 
                 Issuer issuer;
-                try {
-                    //TODO Check correct use of protocol
-                    issuer = client.resource(protocol + "://" + swdHost + "/.well-known/simple-web-discovery")
-                        .queryParam("principal", URLEncoder.encode(swdPrincipal, "utf-8"))
-                        .queryParam("service", URLEncoder.encode("http://openid.net/specs/connect/1.0/issuer", "utf-8"))
-                        .accept(MediaType.APPLICATION_JSON_TYPE).get(Issuer.class);
+                if (OPENID4US_SWD_HOST.equals(swdHost)) {
+                    issuer = new Issuer();
+                    List<String> locations = new ArrayList<String>();
+                    locations.add(OPENID4US_OPENID_CONNECT_ISSUER_SERVICE_LOCATION);
+                    issuer.locations = locations;
+                } else {
+                    try {
+                        //TODO Check correct use of protocol
+                        issuer = client.resource(protocol + "://" + swdHost + "/.well-known/simple-web-discovery")
+                            .queryParam("principal", URLEncoder.encode(swdPrincipal, "utf-8"))
+                            .queryParam("service", URLEncoder.encode("http://openid.net/specs/connect/1.0/issuer", "utf-8"))
+                            .accept(MediaType.APPLICATION_JSON_TYPE).get(Issuer.class);
 
-                    for (String issuerServiceLocation : issuer.locations) {
-                        LOGGER.info(String.format("Issuer Service Location: %s", issuerServiceLocation));
+                        for (String issuerServiceLocation : issuer.locations) {
+                            LOGGER.info(String.format("Issuer Service Location: %s", issuerServiceLocation));
+                        }
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
                 }
                 
                 // Fetch provider configuration
@@ -248,18 +282,30 @@ public class LoginBean {
         
         LOGGER.info(String.format("Provider Registration Endpoint: %s", providerConfiguration.registration_endpoint));
         LOGGER.info(String.format("Provider Authorization Endpoint: %s", providerConfiguration.authorization_endpoint));
+        LOGGER.info(String.format("Provider Token Endpoint: %s", providerConfiguration.token_endpoint));
+        LOGGER.info(String.format("Provider Userinfo Endpoint: %s", providerConfiguration.userinfo_endpoint));
+        
+        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put(PROVIDER_CONFIGURATION_SESSION_ATTRIBUTE_NAME, providerConfiguration);
 
         ClientRegistration clientRegistration = getClientRegistration(providerConfiguration);
         
         String authorizationRequestURL = null;
         try {
-            authorizationRequestURL = client.resource(providerConfiguration.authorization_endpoint)
+            WebResource authorization = client.resource(providerConfiguration.authorization_endpoint)
                 .queryParam("response_type", CODE_AUTHORIZATION_RESPONSE_TYPE)
                 .queryParam("client_id", clientRegistration.getClientIdentifier())
                 .queryParam("redirect_uri", URLEncoder.encode(CALLBACK_URI, "utf-8"))
-                .queryParam("scope", OPENID_AUTHORIZATION_SCOPE)
-                .queryParam("state", AUTHORIZATION_STATE_VALUE)
-                .queryParam("nonce", "123") // Required for wenoit altough optional according to the OpenID Connect specification
+                .queryParam("scope", OPENID_AUTHORIZATION_SCOPE + " " + PROFILE_AUTHORIZATION_SCOPE /* + " " + ADDRESS_AUTHORIZATION_SCOPE */ + " " + EMAIL_AUTHORIZATION_SCOPE)
+                .queryParam("state", AUTHORIZATION_STATE_VALUE);
+            if (WENOU_ISSUER.equals(providerConfiguration.issuer)) {
+                authorization = authorization
+                    .queryParam("nonce", "123"); // Required for Wenou altough optional according to the OpenID Connect specification
+            }
+            //if (OXAUTH_ISSUER.equals(providerConfiguration.issuer)) {
+                //authorization = authorization
+                //    .queryParam("request", "abc");
+            //}
+            authorizationRequestURL = authorization
                 .getURI().toURL().toString();
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -284,7 +330,7 @@ public class LoginBean {
      * @param issuer
      * @return 
      */
-    private ClientRegistration getClientRegistration(ProviderConfiguration providerConfiguration) {
+    public ClientRegistration getClientRegistration(ProviderConfiguration providerConfiguration) {
         if (GOOGLE_ISSUER.equals(providerConfiguration.issuer)) {
             //ClientRegistration clientRegistration = new ClientRegistration();
             ClientRegistration clientRegistration = ClientRegistration.create(GOOGLE_ISSUER);
@@ -319,8 +365,8 @@ public class LoginBean {
                         .accept(MediaType.APPLICATION_JSON_TYPE)
                         .post(ClientRegistration.class,
                                 "type=client_associate" + "&"
-                                + "application_name=Bookstore" + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
-                                + "application_type=web" + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
+                                + "application_name=" + APPLICATION_NAME + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
+                                + "application_type=" + WEB_APPLICATION_TYPE + "&" // Required for oxAuth altough optional according to the OpenID Connect specification
                                 + "redirect_uris=" + URLEncoder.encode(CALLBACK_URI, "utf-8") + "&"
                                 + "logo_url=" + URLEncoder.encode(LOGO_URL, "utf-8") + "&"
                                 //+ "user_id_type=pairwise" + "&"

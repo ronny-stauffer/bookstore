@@ -37,6 +37,10 @@
                 <f:selectItems value="#{cc.attrs.countries}"/>
             </h:selectOneMenu>
             <h:message for="country" styleClass="error"/>
+            
+            <h:outputText value="#{texts.eMailAddress}"/>
+            <h:inputText id="eMailAddress" label="zip" value="#{cc.attrs.eMailAddress}" size="30"/>
+            <h:message for="eMailAddress" styleClass="error"/>
         </h:panelGrid>
     </c:implementation>
 </html>
