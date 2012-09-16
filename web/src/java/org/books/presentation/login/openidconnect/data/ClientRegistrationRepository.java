@@ -1,4 +1,4 @@
-package org.books.presentation.login.openidconnect;
+package org.books.presentation.login.openidconnect.data;
 
 import java.util.Calendar;
 import java.util.logging.Logger;

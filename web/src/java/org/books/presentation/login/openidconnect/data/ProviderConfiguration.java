@@ -1,4 +1,4 @@
-package org.books.presentation.login.openidconnect;
+package org.books.presentation.login.openidconnect.data;
 
 import javax.xml.bind.annotation.XmlRootElement;
 

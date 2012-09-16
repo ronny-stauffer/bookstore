@@ -3,7 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
     
     <h:body>
         <ui:composition>
@@ -16,9 +17,25 @@
                 </h:panelGrid>
                 <h:messages styleClass="error"/>
             </h:form>
-            <h:outputLink value="#{login.loginWithGoogleLink}">
-                <h:outputText value="#{texts.loginWithGoogle}"/>
-            </h:outputLink>
+            <br/>
+            
+            <h:form>            
+            <p:commandLink id="showLoginOptionsButton" value="> #{texts.loginOptions}">
+                <f:setPropertyActionListener value="#{true}" target="#{requestScope.renderLoginOptions}"/>
+            </p:commandLink>
+            <br/>
+            <br/>
+            <p:outputPanel id="loginOptionsPanel" autoUpdate="true">
+            <!-- <p:fieldset legend="#{texts.loginOptions}" toggleable="true" toggleSpeed="500" collapsed="true"> -->
+                <h:panelGroup rendered="#{requestScope.renderLoginOptions}">
+                <h:outputLink value="#{login.loginWithGoogleLink}">
+                    <h:graphicImage url="/resources/google_logo_small.png" height="25"/>
+                    <h:outputText value=" #{texts.loginWithGoogle}"/>
+                </h:outputLink>
+                </h:panelGroup>
+            <!-- </p:fieldset> -->
+            </p:outputPanel>
+            </h:form>
         </ui:composition>
     </h:body>
 </html>

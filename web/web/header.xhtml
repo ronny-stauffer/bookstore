@@ -5,41 +5,49 @@
     xmlns:ui="http://java.sun.com/jsf/facelets"
     xmlns:h="http://java.sun.com/jsf/html">
     
-    <h:panelGrid columns="3">
-        <h:graphicImage url="/resources/books.jpg" height="100px"/>
+    <h:panelGrid columns="2">
         <h:panelGroup>
-            <h:outputText value="#{texts.bookstoreTitle}" styleClass="title"/>
-            <h:form>
-                <h:commandLink action="catalog" value="#{texts.catalogTitle}"/>
-                <h:outputLabel value=" > "/>
-                <h:commandLink action="shoppingCart" value="#{texts.shoppingCartTitle}" disabled="#{not shoppingCartBean.containBooks()}"/>
-                <h:outputLabel value=" > "/>
-                <h:commandLink action="address" value="#{texts.order}" disabled="#{not shoppingCartBean.containBooks()}"/>
-            </h:form>
             <br/>
-            <h:form>
-                <h:outputLabel value="#{texts.currency}: " styleClass="subtitle"/>
-                <h:commandLink action="#{currency.setCurrency('CHF')}" value="CHF" disabled="#{currency.active('CHF')}"/>
-                <h:outputLabel value=" "/>
-                <h:commandLink action="#{currency.setCurrency('EUR')}" value="EUR" disabled="#{currency.active('EUR')}"/>
-                <h:outputLabel value=" "/>
-                <h:commandLink action="#{currency.setCurrency('USD')}" value="USD" disabled="#{currency.active('USD')}"/>
-            </h:form>
+            <h:panelGrid columns="2">
+                <h:graphicImage url="/resources/books.jpg" height="100px"/>
+                <h:panelGroup>
+                    <h:outputText value="#{texts.bookstoreTitle}" styleClass="title"/>
+                    <h:form>
+                        <h:commandLink action="catalog" value="#{texts.catalogTitle}"/>
+                        <h:outputLabel value=" > "/>
+                        <h:commandLink action="shoppingCart" value="#{texts.shoppingCartTitle}" disabled="#{not shoppingCartBean.containBooks()}"/>
+                        <h:outputLabel value=" > "/>
+                        <h:commandLink action="address" value="#{texts.order}" disabled="#{not shoppingCartBean.containBooks()}"/>
+                    </h:form>
+                    <br/>
+                    <h:form>
+                        <h:outputLabel value="#{texts.currency}: " styleClass="subtitle"/>
+                        <h:commandLink action="#{currency.setCurrency('CHF')}" value="CHF" disabled="#{currency.active('CHF')}"/>
+                        <h:outputLabel value=" "/>
+                        <h:commandLink action="#{currency.setCurrency('EUR')}" value="EUR" disabled="#{currency.active('EUR')}"/>
+                        <h:outputLabel value=" "/>
+                        <h:commandLink action="#{currency.setCurrency('USD')}" value="USD" disabled="#{currency.active('USD')}"/>
+                    </h:form>
+                </h:panelGroup>
+            </h:panelGrid>
         </h:panelGroup>
-        <h:form>
-            <h:panelGroup rendered="#{not login.isLoggedIn}">
-                <h:commandLink action="#{login.login}" value="#{texts.login}"/>
-            </h:panelGroup>
-            <h:panelGroup rendered="#{login.isLoggedIn}">
-                <h:outputText value="#{login.loggedInLabel}"/>
-                <h:outputText value=" ("/>
-                <h:commandLink action="#{login.logout}" value="#{texts.logout}"/>
-                <h:outputText value=")"/>
-            </h:panelGroup>
-        </h:form>
+            
+        <h:panelGrid columns="2">
+            <h:form>
+                <h:panelGroup rendered="#{not login.isLoggedIn}">
+                    <h:commandLink action="#{login.login}" value="#{texts.login}"/>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{login.isLoggedIn}">
+                    <h:outputText value="#{login.loggedInLabel}"/>
+                    <h:outputText value=" ("/>
+                    <h:commandLink action="#{login.logout}" value="#{texts.logout}"/>
+                    <h:outputText value=")"/>
+                </h:panelGroup>
+            </h:form>
+            <h:graphicImage url="#{login.loggedInUserPhotoURL}" height="50" rendered="#{login.isLoggedIn}"/>
+        </h:panelGrid>
     </h:panelGrid>
     <p>
         <h:outputText value="#{subheader}" styleClass="heading"/>
     </p>
-    
 </ui:composition>

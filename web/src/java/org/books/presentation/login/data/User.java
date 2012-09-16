@@ -1,4 +1,4 @@
-package org.books.presentation.login;
+package org.books.presentation.login.data;
 
 /**
  * Represents the user logged in.
@@ -11,6 +11,7 @@ public class User {
     private String firstName;
     private String lastName;
     private String eMailAddress;
+    private String photoURL;
     
     public static class Builder {
         private String firstName;
@@ -26,6 +27,7 @@ public class User {
             
             private String lastName;
             private String eMailAddress;
+            private String photoURL;
             
             private Builder2(Builder builder, String lastName) {
                 assert builder != null;
@@ -49,11 +51,25 @@ public class User {
                 return this;
             }
             
+            public Builder2 photoURL(String photoURL) {
+                if (photoURL == null) {
+                    return this;
+                }
+                if (photoURL.isEmpty()) {
+                    throw new IllegalArgumentException("photoURL must not be empty!");
+                }
+                
+                this.photoURL = photoURL;
+                
+                return this;
+            }
+            
             public User build() {
                 User user = new User();
                 user.firstName = builder.firstName;
                 user.lastName = lastName;
                 user.eMailAddress = eMailAddress;
+                user.photoURL = photoURL;
                 
                 return user;
             }
@@ -98,5 +114,9 @@ public class User {
     
     public String getEMailAddress() {
         return eMailAddress;
+    }
+    
+    public String getPhotoURL() {
+        return photoURL;
     }
 }

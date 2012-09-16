@@ -23,6 +23,7 @@ import com.nimbusds.openid.connect.messages.ClientAuthentication;
 import com.nimbusds.openid.connect.messages.ClientSecretPost;
 import com.nimbusds.openid.connect.messages.ErrorCode;
 import com.nimbusds.openid.connect.messages.Request;
+import com.nimbusds.openid.connect.messages.State;
 import com.nimbusds.openid.connect.messages.UserInfoRequest;
 import com.nimbusds.openid.connect.messages.UserInfoResponse;
 import com.sun.jersey.api.client.Client;
@@ -33,7 +34,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.faces.application.FacesMessage;
@@ -46,11 +46,13 @@ import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.MediaType;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
-import org.books.presentation.login.User;
+import org.books.presentation.login.data.User;
+import org.books.presentation.login.openidconnect.data.ClientRegistration;
+import org.books.presentation.login.openidconnect.data.ProviderConfiguration;
 
 /**
  *
- * @author ue56923
+ * @author Ronny Stauffer
  */
 public class LoginCallbackServlet extends HttpServlet {
     public static class LoginError extends Exception {
@@ -118,11 +120,11 @@ public class LoginCallbackServlet extends HttpServlet {
             addToLoginContext(request, LoginBean.LOGIN_MESSAGE_LOGIN_CONTEXT_KEY, errorMessage.getSummary());
         }
 
-        String returnURL = getServletContext().getContextPath(); //getRealPath("/");
+        String afterLoginURL = getServletContext().getContextPath();
         
-        LOGGER.info(String.format("Return URL: %s", returnURL));
+        LOGGER.info(String.format("After-Login URL: %s", afterLoginURL));
         
-        response.sendRedirect(returnURL);
+        response.sendRedirect(afterLoginURL);
     }
     
     private void proceedWithLogin(HttpServletRequest request) throws LoginError, IOException {
@@ -143,30 +145,40 @@ public class LoginCallbackServlet extends HttpServlet {
             }
         } catch (ParseException e) {
             // Ignore exception
-            
-            int dummy = 0;
         }
         
         AuthorizationCode authorizationCode;
+        State state;
         try {
             AuthorizationResponse authorizationResponse = AuthorizationResponse.parse(authorizationCallbackURL);
             authorizationCode = authorizationResponse.getAuthorizationCode();
+            state = authorizationResponse.getState();
         } catch (ParseException e) {
             throw new RuntimeException(e);
-        } 
+        }
+        
+        if (authorizationCode == null) {
+            throw new RuntimeException("Missing authorization code!");
+        }
         
         LOGGER.info(String.format("Authorization Code: %s", authorizationCode.getValue()));
+        LOGGER.info(String.format("State: %s", state != null ? state.toString() : "<Undefined>"));
         
         HttpSession session = request.getSession();
         
-        LOGGER.info("HTTP Session Attributes:");
-        Enumeration<String> attributeNames = session.getAttributeNames();
-        while (attributeNames.hasMoreElements()) {
-            String attributeName = attributeNames.nextElement();
-            LOGGER.info(String.format("\tAttribute Name: %s", attributeName));
-        }
+//        LOGGER.info("HTTP Session Attributes:");
+//        Enumeration<String> attributeNames = session.getAttributeNames();
+//        while (attributeNames.hasMoreElements()) {
+//            String attributeName = attributeNames.nextElement();
+//            LOGGER.info(String.format("\tAttribute Name: %s", attributeName));
+//        }
         
-        ProviderConfiguration providerConfiguration = getFromLoginContext(request, LoginBean.PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY);
+        ProviderConfiguration providerConfiguration;
+        if (state != null && state.toString().startsWith(LoginBean.GOOGLE_DISCRIMINATOR)) {
+            providerConfiguration = LoginBean.GOOGLE_PROVIDER_CONFIGURATION;
+        } else {
+            providerConfiguration = getFromLoginContext(request, LoginBean.PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY);
+        }
         
         LoginBean loginBean = getFromLoginContext(request, LoginBean.NAME);
         ClientRegistration clientRegistration = loginBean.getClientRegistration(providerConfiguration);
@@ -327,15 +339,21 @@ public class LoginCallbackServlet extends HttpServlet {
                 if (userInfo.getEmail() != null) {
                     eMail = userInfo.getEmail().getClaimValue().getAddress();
                 }
+                String pictureURL = null;
+                if (userInfo.getPicture() != null) {
+                    pictureURL = userInfo.getPicture().getClaimValue().toString();
+                }
                 
-                LOGGER.info(String.format("Userinfo Given Name: %s", givenName));
-                LOGGER.info(String.format("Userinfo Familiy Name: %s", familyName));
+                LOGGER.info(String.format("Userinfo Given Name: %s", givenName != null ? givenName : "<Unknown>"));
+                LOGGER.info(String.format("Userinfo Familiy Name: %s", familyName != null ? familyName : "<Unknown>"));
                 LOGGER.info(String.format("Userinfo E-Mail: %s", eMail != null ? eMail : "<Unknown>"));
+                LOGGER.info(String.format("Userinfo E-Mail: %s", pictureURL != null ? pictureURL : "<Unknown>"));
                 
                 User user = User
                     .firstName(givenName)
                     .lastName(familyName)
                     .eMailAddress(eMail)
+                    .photoURL(pictureURL)
                     .build();
 
                 addToLoginContext(request, LoginBean.USER_LOGIN_CONTEXT_KEY, user);

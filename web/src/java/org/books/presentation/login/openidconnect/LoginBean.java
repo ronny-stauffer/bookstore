@@ -34,11 +34,15 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.core.MediaType;
 import org.books.presentation.MessageFactory;
-import org.books.presentation.login.User;
+import org.books.presentation.login.data.User;
+import org.books.presentation.login.openidconnect.data.ClientRegistration;
+import org.books.presentation.login.openidconnect.data.ClientRegistrationRepository;
+import org.books.presentation.login.openidconnect.data.Issuer;
+import org.books.presentation.login.openidconnect.data.ProviderConfiguration;
 import org.books.presentation.navigation.Navigation;
 
 /**
- * Steps:
+ * OpenID Connect Login Steps:
  * 1. Initiate Authentication
  * 1.1 Provider Discovery (using Simple Web Discovery)
  *      Lookup instance of OpenID Connect Issuer Service Type
@@ -50,7 +54,7 @@ import org.books.presentation.navigation.Navigation;
  *          * Client Identifier
  *          * Client Secret
  * 1.3 Authorization
- *      Send Authorization Request
+ *      Send Authorization Request (End-User Redirection to Provider)
  * 2. End-User Redirection to Client (Callback)
  * 3. Fetch ID Token and Access Token
  *      Send Token Request and process response
@@ -58,6 +62,7 @@ import org.books.presentation.navigation.Navigation;
  * 4. Verify ID Token
  * 5. Fetch Userinfo
  *      Send Userinfo Request and process response
+ * 6. End-User Redirection to After-Login Page (of this application)
  * 
  * @author Ronny Stauffer
  */
@@ -83,11 +88,14 @@ public class LoginBean {
     private static final String GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
     private static final String GOOGLE_TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
     private static final String GOOGLE_USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v1/userinfo";
+    public static final String GOOGLE_DISCRIMINATOR = "google";
+    public  static final ProviderConfiguration GOOGLE_PROVIDER_CONFIGURATION;
+    private static final String GOOGLE_CLIENT_IDENTIFIER = "486945023370.apps.googleusercontent.com";
+    private static final String GOOGLE_CLIENT_SECRET = "vvPGiAWvm8s3qzRDHVt-5Z9G";
+    
     private static final String OXAUTH_ISSUER = "http://localhost:8082/oxauth-server-0.3";
-    private static final String WENOU_ISSUER = "https://wenou-test.wenoit.org";
 
-    private static final String CLIENT_IDENTIFIER_FOR_GOOGLE = "486945023370.apps.googleusercontent.com";
-    private static final String CLIENT_SECRET_FOR_GOOGLE = "vvPGiAWvm8s3qzRDHVt-5Z9G";
+    private static final String WENOU_ISSUER = "https://wenou-test.wenoit.org";
     
     private static final String WEB_APPLICATION_TYPE = "web";
     
@@ -130,6 +138,15 @@ public class LoginBean {
     
     private static final Logger LOGGER = Logger.getLogger(LoginBean.class.getName());
     
+    static {
+        ProviderConfiguration providerConfiguration = new ProviderConfiguration();
+        providerConfiguration.issuer = GOOGLE_ISSUER;
+        providerConfiguration.authorization_endpoint = GOOGLE_AUTHORIZATION_ENDPOINT;
+        providerConfiguration.token_endpoint = GOOGLE_TOKEN_ENDPOINT;
+        providerConfiguration.userinfo_endpoint = GOOGLE_USERINFO_ENDPOINT;
+        GOOGLE_PROVIDER_CONFIGURATION = providerConfiguration;
+    }    
+    
     @PersistenceContext(unitName = "openIDConnect")
     private EntityManager entityManager;
     
@@ -152,10 +169,10 @@ public class LoginBean {
         try {
         return GOOGLE_AUTHORIZATION_ENDPOINT + "?"
                 + "response_type=" + CODE_AUTHORIZATION_RESPONSE_TYPE + "&"
-                + "client_id=" + CLIENT_IDENTIFIER_FOR_GOOGLE + "&"
+                + "client_id=" + GOOGLE_CLIENT_IDENTIFIER + "&"
                 + "redirect_uri=" + URLEncoder.encode(CALLBACK_URI, "utf-8") + "&"
-                + "scope=" + OPENID_AUTHORIZATION_SCOPE + "&"
-                + "state=" + AUTHORIZATION_STATE_VALUE + "&"
+                + "scope=" + OPENID_AUTHORIZATION_SCOPE + "+" + PROFILE_AUTHORIZATION_SCOPE + "&"
+                + "state=" + GOOGLE_DISCRIMINATOR + AUTHORIZATION_STATE_VALUE + "&"
                 + "display=popup";
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -179,13 +196,39 @@ public class LoginBean {
         return loggedInLabel;
     }
     
+    public String getLoggedInUserPhotoURL() {
+        if (!getIsLoggedIn()) {
+            throw new IllegalStateException("Nobody is logged in!");
+        }
+        
+        String loggedInUserPhotoURL;
+        
+        User user = (User)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(USER_LOGIN_CONTEXT_KEY);
+        loggedInUserPhotoURL = user.getPhotoURL();
+        
+        return loggedInUserPhotoURL;        
+    }
+    
     public String login() {
         return Navigation.login();
     }
     
     public String logout() {
-        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(USER_LOGIN_CONTEXT_KEY);
+        //FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(USER_LOGIN_CONTEXT_KEY);
         
+        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+        externalContext.invalidateSession();
+        
+        String afterLogoutURL = externalContext.getRequestContextPath();
+        
+        LOGGER.info(String.format("After-Logout URL: %s", afterLogoutURL));
+    
+        try {
+            externalContext.redirect(afterLogoutURL);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         return null;
     }
     
@@ -239,12 +282,12 @@ public class LoginBean {
         
         ProviderConfiguration providerConfiguration = null;
         if (GOOGLE_SHORTCUT.equals(openIDConnectIdentifier) || openIDConnectIdentifier.matches(GOOGLE_OPENID_CONNECT_IDENTIFIER_REGEX)) {
-           providerConfiguration = new ProviderConfiguration();
-           providerConfiguration.issuer = GOOGLE_ISSUER;
-           providerConfiguration.authorization_endpoint = GOOGLE_AUTHORIZATION_ENDPOINT;
-           providerConfiguration.token_endpoint = GOOGLE_TOKEN_ENDPOINT;
-           providerConfiguration.userinfo_endpoint = GOOGLE_USERINFO_ENDPOINT;
-                
+//           providerConfiguration = new ProviderConfiguration();
+//           providerConfiguration.issuer = GOOGLE_ISSUER;
+//           providerConfiguration.authorization_endpoint = GOOGLE_AUTHORIZATION_ENDPOINT;
+//           providerConfiguration.token_endpoint = GOOGLE_TOKEN_ENDPOINT;
+//           providerConfiguration.userinfo_endpoint = GOOGLE_USERINFO_ENDPOINT;
+             providerConfiguration = GOOGLE_PROVIDER_CONFIGURATION;
         } else {
             String swdPrincipal;
             String swdHost;
@@ -395,8 +438,8 @@ public class LoginBean {
         
         if (GOOGLE_ISSUER.equals(providerConfiguration.issuer)) {
             clientRegistration = new ClientRegistrationRepository(entityManager).create(GOOGLE_ISSUER);
-            clientRegistration.setClientIdentifier(CLIENT_IDENTIFIER_FOR_GOOGLE);
-            clientRegistration.setClientSecret(CLIENT_SECRET_FOR_GOOGLE);
+            clientRegistration.setClientIdentifier(GOOGLE_CLIENT_IDENTIFIER);
+            clientRegistration.setClientSecret(GOOGLE_CLIENT_SECRET);
         } else {
 //            try {
 //                clientRegistration = em.createQuery("select clientRegistration from ClientRegistration clientRegistration where clientRegistration.issuer = :issuer", ClientRegistration.class)
