@@ -5,4 +5,6 @@ Google APIs Console
 https://code.google.com/apis/console/
 
 Amazon Web Services
+http://aws.amazon.com/
 	Product Advertising API
+	https://affiliate-program.amazon.com/gp/advertising/api/detail/main.html
