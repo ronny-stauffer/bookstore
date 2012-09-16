@@ -5,7 +5,10 @@
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import javax.ws.rs.core.UriBuilder;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -27,6 +30,22 @@ public class EncodingTests {
     
     @AfterClass
     public static void tearDownClass() {
+    }
+    
+    @Test
+    public void testRFC3339Timestamps() {
+        Calendar calendar = Calendar.getInstance();
+        
+        TimeZone timeZone = calendar.getTimeZone();
+        System.out.println(String.format("Time Zone ID: %s", timeZone.getID()));
+        System.out.println(String.format("Time Zone Display Name: %s", timeZone.getDisplayName()));
+
+        Date timestamp = calendar.getTime();
+        String rfc3339Timestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(timestamp);
+        System.out.println(String.format("RFC3339 Timestamp: %s", rfc3339Timestamp));
+
+        String rfc3339Timestamp2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(timestamp);
+        System.out.println(String.format("RFC3339 Timestamp 2: %s", rfc3339Timestamp2));
     }
     
     @Test

@@ -84,7 +84,7 @@ public class LoginBean {
     private static final String OPENID4US_SWD_HOST = "connect.openid4.us";
     private static final String OPENID4US_OPENID_CONNECT_ISSUER_SERVICE_LOCATION = "https://connect.openid4.us/abop";
     
-    private static final String GOOGLE_ISSUER = "https://accounts.google.com";
+    public static final String GOOGLE_ISSUER = "https://accounts.google.com";
     private static final String GOOGLE_AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/auth";
     private static final String GOOGLE_TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
     private static final String GOOGLE_USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v1/userinfo";
@@ -111,6 +111,7 @@ public class LoginBean {
     private static final String PROFILE_AUTHORIZATION_SCOPE = "profile";
     private static final String ADDRESS_AUTHORIZATION_SCOPE = "address";
     private static final String EMAIL_AUTHORIZATION_SCOPE = "email";
+    private static final String GOOGLE_CALENDAR_AUTHORIZATION_SCOPE = "https://www.googleapis.com/auth/calendar";
     
     /**
      * Authorization State Value
@@ -133,6 +134,7 @@ public class LoginBean {
     public static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
     
     public static final String PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY = "openIdConnectProviderConfiguration";
+    public static final String ACCESS_TOKEN_LOGIN_CONTEXT_KEY = "oAuthAccessToken";    
     public static final String USER_LOGIN_CONTEXT_KEY = "user";
     public static final String LOGIN_MESSAGE_LOGIN_CONTEXT_KEY = "loginMessage";
     
@@ -388,13 +390,18 @@ public class LoginBean {
             clientRegistration = performDynamicClientRegistration(providerConfiguration);
         }
         
+        String authorizationScope = OPENID_AUTHORIZATION_SCOPE + " " + PROFILE_AUTHORIZATION_SCOPE /* + " " + ADDRESS_AUTHORIZATION_SCOPE */ + " " + EMAIL_AUTHORIZATION_SCOPE;
+        if (GOOGLE_ISSUER.equals(providerConfiguration.issuer)) {
+            authorizationScope += " " + GOOGLE_CALENDAR_AUTHORIZATION_SCOPE;
+        }
+        
         String authorizationRequestURL = null;
         try {
             WebResource authorizationResource = client.resource(providerConfiguration.authorization_endpoint)
                 .queryParam("response_type", CODE_AUTHORIZATION_RESPONSE_TYPE)
                 .queryParam("client_id", clientRegistration.getClientIdentifier())
                 .queryParam("redirect_uri", URLEncoder.encode(CALLBACK_URI, "utf-8"))
-                .queryParam("scope", OPENID_AUTHORIZATION_SCOPE + " " + PROFILE_AUTHORIZATION_SCOPE /* + " " + ADDRESS_AUTHORIZATION_SCOPE */ + " " + EMAIL_AUTHORIZATION_SCOPE)
+                .queryParam("scope", authorizationScope)
                 .queryParam("state", AUTHORIZATION_STATE_VALUE);
             if (WENOU_ISSUER.equals(providerConfiguration.issuer)) {
                 authorizationResource = authorizationResource

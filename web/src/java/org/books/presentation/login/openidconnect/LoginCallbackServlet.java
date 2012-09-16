@@ -240,6 +240,8 @@ public class LoginCallbackServlet extends HttpServlet {
             throw new RuntimeException(e);
         }
         
+        addToLoginContext(request, LoginBean.ACCESS_TOKEN_LOGIN_CONTEXT_KEY, accessToken);
+        
         JSONObject idTokenJSONObject = idJWTToken.getClaimsSet().toJSONObject();
         
 //        List<String> keysToRemove = new ArrayList<String>();
