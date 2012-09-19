@@ -13,11 +13,11 @@
                 <h:panelGroup>
                     <h:outputText value="#{texts.bookstoreTitle}" styleClass="title"/>
                     <h:form>
-                        <h:commandLink action="catalog" value="#{texts.catalogTitle}"/>
+                        <h:commandLink action="/catalog" value="#{texts.catalogTitle}"/>
                         <h:outputLabel value=" > "/>
-                        <h:commandLink action="shoppingCart" value="#{texts.shoppingCartTitle}" disabled="#{not shoppingCartBean.containBooks()}"/>
+                        <h:commandLink action="/shoppingCart" value="#{texts.shoppingCartTitle}" disabled="#{not shoppingCartBean.containBooks()}"/>
                         <h:outputLabel value=" > "/>
-                        <h:commandLink action="address" value="#{texts.order}" disabled="#{not shoppingCartBean.containBooks()}"/>
+                        <h:commandLink action="/address" value="#{texts.order}" disabled="#{not shoppingCartBean.containBooks()}"/>
                     </h:form>
                     <br/>
                     <h:form>
