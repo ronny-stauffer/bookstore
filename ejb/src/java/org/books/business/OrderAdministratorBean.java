@@ -17,7 +17,7 @@ import org.books.common.exception.OrderNotFoundException;
  * @author staufferr
  */
 @Stateless
-@RolesAllowed("employee")
+//@RolesAllowed("employee")
 public class OrderAdministratorBean implements OrderAdministratorRemote, OrderAdministratorLocal {
     @PersistenceContext(unitName = "bookstore")
     private EntityManager em;
@@ -34,7 +34,7 @@ public class OrderAdministratorBean implements OrderAdministratorRemote, OrderAd
         return searchOrdersQuery.getResultList();
     }
 
-    @RolesAllowed("manager")
+    //@RolesAllowed("manager")
     @Override    
     public void cancelOrder(String number) throws OrderNotFoundException, OrderNotCancelableException {
         TypedQuery findOrderQuery = em.createQuery("SELECT o FROM CustomerOrder o WHERE o.number = :number", Order.class);

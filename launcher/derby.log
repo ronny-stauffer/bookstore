@@ -1,0 +1,21 @@
+Tue Sep 25 00:44:27 CEST 2012 : Apache Derby Network Server 10.8.1.2 - (1095077) wurde gestartet und ist bereit, Verbindungen am Port 1527 zu akzeptieren.
+----------------------------------------------------------------
+Tue Sep 25 00:44:27 CEST 2012:
+Booten von Derby Version The Apache Software Foundation - Apache Derby - 10.8.1.2 - (1095077): Instanz a816c00e-0139-fa73-f7ab-000000bc6000
+für Datenbankverzeichnis C:\work\ue56923\_extern\bfh\sp\openid_connect\java\bookstore\launcher\bookstore   mit Klassenladeprogrammn sun.misc.Launcher$AppClassLoader@6eb38a
+
+java.vendor=Oracle Corporation
+java.runtime.version=1.7.0_02-b13
+user.dir=C:\work\ue56923\_extern\bfh\sp\openid_connect\java\bookstore\launcher
+derby.system.home=null
+Das Ladeprogramm für Datenbankklassen wurde gestartet - derby.database.classpath=''
+----------------------------------------------------------------
+Tue Sep 25 00:44:51 CEST 2012:
+Booten von Derby Version The Apache Software Foundation - Apache Derby - 10.8.1.2 - (1095077): Instanz 1a6500e9-0139-fa73-f7ab-000000bc6000
+für Datenbankverzeichnis C:\Users\UE56923\AppData\Local\Temp\gfembed3830513780983046105tmp\lib\databases\ejbtimer   mit Klassenladeprogrammn sun.misc.Launcher$AppClassLoader@6eb38a
+
+java.vendor=Oracle Corporation
+java.runtime.version=1.7.0_02-b13
+user.dir=C:\work\ue56923\_extern\bfh\sp\openid_connect\java\bookstore\launcher
+derby.system.home=null
+Das Ladeprogramm für Datenbankklassen wurde gestartet - derby.database.classpath=''

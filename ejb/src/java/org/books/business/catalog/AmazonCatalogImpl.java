@@ -10,7 +10,7 @@ import org.books.common.exception.CatalogException;
  *
  * @author Christoph Horber
  */
-public class CatalogImpl implements Catalog {
+public class AmazonCatalogImpl implements Catalog {
     
     // AWS limit constants
     private static final int ITEMS_PER_PAGE = 10;

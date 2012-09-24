@@ -4,3 +4,6 @@
 /ejb/dist
 /web/build
 /web/dist
+/launcher/nbproject/private/
+/launcher/dist/
+/launcher/build/

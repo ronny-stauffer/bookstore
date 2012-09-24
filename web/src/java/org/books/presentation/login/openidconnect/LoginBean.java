@@ -76,7 +76,6 @@ public class LoginBean {
     private static final String EMAIL_ADDRESS_REGEX = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
     private static final String URL_SCHEME_REGEX = "https?://";
     private static final String HTTPS_SCHEME = "https://";
-    //private static final String FRAGMENT_REGEX = "#.*$";
     
     /**
      * Self-defined identifier
@@ -131,7 +130,8 @@ public class LoginBean {
     /**
      * Client Callback URI
      */
-    public static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
+    //public static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
+    public static final String CALLBACK_URI = "http://wir-entwickeln.ch:8080/bookstore/login/callback";
     
     public static final String PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY = "openIdConnectProviderConfiguration";
     public static final String ACCESS_TOKEN_LOGIN_CONTEXT_KEY = "oAuthAccessToken";    
@@ -208,7 +208,7 @@ public class LoginBean {
         User user = (User)FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(USER_LOGIN_CONTEXT_KEY);
         loggedInUserPhotoURL = user.getPhotoURL();
         
-        return loggedInUserPhotoURL;        
+        return loggedInUserPhotoURL;
     }
     
     public String login() {
@@ -216,8 +216,6 @@ public class LoginBean {
     }
     
     public String logout() {
-        //FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(USER_LOGIN_CONTEXT_KEY);
-        
         ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
         externalContext.invalidateSession();
         
@@ -284,11 +282,6 @@ public class LoginBean {
         
         ProviderConfiguration providerConfiguration = null;
         if (GOOGLE_SHORTCUT.equals(openIDConnectIdentifier) || openIDConnectIdentifier.matches(GOOGLE_OPENID_CONNECT_IDENTIFIER_REGEX)) {
-//           providerConfiguration = new ProviderConfiguration();
-//           providerConfiguration.issuer = GOOGLE_ISSUER;
-//           providerConfiguration.authorization_endpoint = GOOGLE_AUTHORIZATION_ENDPOINT;
-//           providerConfiguration.token_endpoint = GOOGLE_TOKEN_ENDPOINT;
-//           providerConfiguration.userinfo_endpoint = GOOGLE_USERINFO_ENDPOINT;
              providerConfiguration = GOOGLE_PROVIDER_CONFIGURATION;
         } else {
             String swdPrincipal;
@@ -407,10 +400,6 @@ public class LoginBean {
                 authorizationResource = authorizationResource
                     .queryParam("nonce", "123"); // Required for Wenou altough optional according to the OpenID Connect specification
             }
-            //if (OXAUTH_ISSUER.equals(providerConfiguration.issuer)) {
-                //authorization = authorization
-                //    .queryParam("request", "abc");
-            //}
             authorizationRequestURL = authorizationResource
                 .getURI().toURL().toString();
         } catch (UnsupportedEncodingException e) {
@@ -428,7 +417,7 @@ public class LoginBean {
             throw new RuntimeException(e);
         }
         
-        return null;        
+        return null;
     }
     
     /**
@@ -448,13 +437,6 @@ public class LoginBean {
             clientRegistration.setClientIdentifier(GOOGLE_CLIENT_IDENTIFIER);
             clientRegistration.setClientSecret(GOOGLE_CLIENT_SECRET);
         } else {
-//            try {
-//                clientRegistration = em.createQuery("select clientRegistration from ClientRegistration clientRegistration where clientRegistration.issuer = :issuer", ClientRegistration.class)
-//                    .setParameter("issuer", providerConfiguration.issuer)
-//                    .getSingleResult();
-//            } catch (NoResultException e) {
-//                // Ignore exception
-//            }
             clientRegistration = new ClientRegistrationRepository(entityManager).findValid(providerConfiguration.issuer);
         }
         
@@ -473,13 +455,6 @@ public class LoginBean {
         Client client = Client.create();
         try {
             clientRegistration = client.resource(providerConfiguration.registration_endpoint)
-                //.queryParam("type", "client_associate")
-                //.queryParam("application_name", "Bookstore") // Required for oxAuth altough optional according to the OpenID Connect specification
-                //.queryParam("application_type", "web") // Required for oxAuth altough optional according to the OpenID Connect specification
-                //.queryParam("redirect_uris", URLEncoder.encode(CALLBACK_URI, "utf-8"))
-                //.queryParam("logo_url", URLEncoder.encode(LOGO_URL, "utf-8"))
-                ////.queryParam("user_id_type", "pairwise")
-                //.queryParam("token_endpoint_auth_type", "client_secret_basic")
                 .type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientRegistration.class,

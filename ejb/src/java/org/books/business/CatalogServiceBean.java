@@ -11,7 +11,7 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import org.books.business.catalog.Catalog;
-import org.books.business.catalog.CatalogImpl;
+import org.books.business.catalog.LocalCatalogImpl;
 import org.books.common.data.Book;
 import org.books.common.exception.CatalogException;
 import org.books.common.exception.InvalidCriteriaException;
@@ -25,7 +25,8 @@ public class CatalogServiceBean implements CatalogServiceRemote, CatalogServiceL
 
     private static final String WILDCARD = "%";
     
-    private final Catalog catalog = new CatalogImpl();
+    private final Catalog catalog = new LocalCatalogImpl();
+    //private final Catalog catalog = new AmazonCatalogImpl();
     
     @Resource(name = "maxSearchResults") int maxSearchResults;
     

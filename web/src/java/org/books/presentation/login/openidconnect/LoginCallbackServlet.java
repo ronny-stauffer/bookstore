@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.books.presentation.login.openidconnect;
 
 import com.nimbusds.jwt.JWT;
@@ -93,21 +89,6 @@ public class LoginCallbackServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-//        response.setContentType("text/html;charset=UTF-8");
-//        PrintWriter out = response.getWriter();
-//        try {
-//            /* TODO output your page here. You may use following sample code. */
-//            out.println("<html>");
-//            out.println("<head>");
-//            out.println("<title>Servlet LoginCallbackServlet</title>");            
-//            out.println("</head>");
-//            out.println("<body>");
-//            out.println("<h1>Servlet LoginCallbackServlet at " + request.getContextPath() + "</h1>");
-//            out.println("</body>");
-//            out.println("</html>");
-//        } finally {            
-//            out.close();
-//        }
         try {
             proceedWithLogin(request);
         } catch (LoginError e) {
@@ -166,13 +147,6 @@ public class LoginCallbackServlet extends HttpServlet {
         
         HttpSession session = request.getSession();
         
-//        LOGGER.info("HTTP Session Attributes:");
-//        Enumeration<String> attributeNames = session.getAttributeNames();
-//        while (attributeNames.hasMoreElements()) {
-//            String attributeName = attributeNames.nextElement();
-//            LOGGER.info(String.format("\tAttribute Name: %s", attributeName));
-//        }
-        
         ProviderConfiguration providerConfiguration;
         if (state != null && state.toString().startsWith(LoginBean.GOOGLE_DISCRIMINATOR)) {
             providerConfiguration = LoginBean.GOOGLE_PROVIDER_CONFIGURATION;
@@ -210,14 +184,14 @@ public class LoginCallbackServlet extends HttpServlet {
         
         LOGGER.info(String.format("Token HTTP Response Body: %s", tokenHTTPResponseBody));
         
-//        HTTPResponse tokenHTTPResponse;
-//        try {
-//            tokenHTTPResponse = new HTTPResponse(200);
-//            tokenHTTPResponse.setContentType(new ContentType(MediaType.APPLICATION_JSON)); // We use the application/json type definition from JAX-RS
-//            tokenHTTPResponse.setContent(tokenHTTPResponseBody);
-//        } catch (javax.mail.internet.ParseException e) {
-//            throw new RuntimeException(e);
-//        }
+        //HTTPResponse tokenHTTPResponse;
+        //try {
+        //    tokenHTTPResponse = new HTTPResponse(200);
+        //    tokenHTTPResponse.setContentType(new ContentType(MediaType.APPLICATION_JSON)); // We use the application/json type definition from JAX-RS
+        //    tokenHTTPResponse.setContent(tokenHTTPResponseBody);
+        //} catch (javax.mail.internet.ParseException e) {
+        //    throw new RuntimeException(e);
+        //}
 
         JSONObject tokensJSONObject;
         try {
@@ -225,10 +199,6 @@ public class LoginCallbackServlet extends HttpServlet {
         } catch (net.minidev.json.parser.ParseException e) {
             throw new RuntimeException(e);
         }
-        
-        //tokensJSONObject.put("nonce", "123");
-        
-        //LOGGER.info(String.format("Token JSON Object: %s", tokensJSONObject.toJSONString()));
         
         AccessToken accessToken;
         JWT idJWTToken;
@@ -244,21 +214,6 @@ public class LoginCallbackServlet extends HttpServlet {
         
         JSONObject idTokenJSONObject = idJWTToken.getClaimsSet().toJSONObject();
         
-//        List<String> keysToRemove = new ArrayList<String>();
-//        for (String key : idTokenJSONObject.keySet()) {
-//            if (!("iss".equals(key)
-//                    || "user_id".equals(key)
-//                    || "aud".equals(key)
-//                    || "iat".equals(key)
-//                    /* || "exp".equals(key) */)) { // Not allowd by NimbusDS OpenID Connect SDK altough required by OpenID Connect Specification
-//                keysToRemove.add(key);
-//            }
-//        }
-//        for (String key : keysToRemove) {
-//            idTokenJSONObject.remove(key);
-//        }
-//        idTokenJSONObject.put("nonce", "123"); // Required by NimbusDS OpenID Connect SDK altough not required by OpenID Connect Specification
-        
         JSONObject idTokenJSONObject2 = new JSONObject();
         idTokenJSONObject2.put("iss", idTokenJSONObject.get("iss"));
         idTokenJSONObject2.put("user_id", idTokenJSONObject.get("user_id"));
@@ -268,11 +223,6 @@ public class LoginCallbackServlet extends HttpServlet {
         idTokenJSONObject2.put("nonce", "123"); // Required by NimbusDS OpenID Connect SDK altough not required by OpenID Connect Specification
         
         LOGGER.info(String.format("ID Token JSON Object: %s", idTokenJSONObject2.toJSONString()));
-        
-//        LOGGER.info("ID Token Reserved Keys:");
-//        for (String key : IDTokenClaims.getReservedClaimNames()) {
-//            LOGGER.info(String.format("\tKey: %s", key));
-//        }
         
         IDTokenClaims idToken;
         try {
@@ -291,13 +241,6 @@ public class LoginCallbackServlet extends HttpServlet {
                 && Calendar.getInstance().getTime().before(idToken.getExpirationTime().getClaimValueAsDate())) {
             LOGGER.info("ID Token is valid.");
             LOGGER.info("User has successfully logged in!");
-            
-//            User testUser = User
-//                    .firstName("John")
-//                    .lastName("Doe")
-//                    .eMailAddress("john.doe@example.com")
-//                    .build();
-//            addToLoginContext(request, LoginBean.USER_LOGIN_CONTEXT_KEY, testUser);
             
             UserInfoRequest userInfoRequest = new UserInfoRequest(/* Method.POST, */ accessToken);
             Result<UserInfoResponse> result = performRequest("Userinfo", userInfoRequest, providerConfiguration.userinfo_endpoint, UserInfoResponse.class, new JSONTransformer() {
