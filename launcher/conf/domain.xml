@@ -8,43 +8,6 @@
     </application>
   </system-applications>
   <applications>
-    <!--
-    <application location="file:/C:/work/ue56923/_extern/bfh/sp/openid_connect/java/bookstore/ear/dist/gfdeploy/bookstore-ear/" name="bookstore-ear" directory-deployed="true" object-type="user">
-      <property name="org.glassfish.ejb.startup.keepstate" value="true"></property>
-      <property name="preserveAppScopedResources" value="true"></property>
-      <property name="isComposite" value="true"></property>
-      <property name="appLocation" value="file:/C:/work/ue56923/_extern/bfh/sp/openid_connect/java/bookstore/ear/dist/gfdeploy/bookstore-ear/"></property>
-      <property name="org.glassfish.ejb.container.application_unique_id" value="88369579222564864"></property>
-      <property name="defaultAppName" value="bookstore-ear"></property>
-      <property name="keepSessions" value="true"></property>
-      <engine sniffer="ear"></engine>
-      <module name="bookstore-ejb.jar">
-        <property name="org.glassfish.persistence.drop_jdbc_file_name_property.bookstore" value="bookstore-ear_bookstore-ejb_bookstore_dropDDL.jdbc"></property>
-        <property name="org.glassfish.persistence.resource_jndi_name_property.bookstore" value="jdbc/bookstore"></property>
-        <property name="org.glassfish.persistence.processor_type.bookstore" value="JPA"></property>
-        <property name="org.glassfish.persistence.create_table_value_property.bookstore" value="true"></property>
-        <property name="org.glassfish.persistence.create_jdbc_file_name_property.bookstore" value="bookstore-ear_bookstore-ejb_bookstore_createDDL.jdbc"></property>
-        <property name="org.glassfish.persistence.drop_table_value_property.bookstore" value="false"></property>
-        <property name="org.glassfish.persistence.app_name_property" value="bookstore-ear"></property>
-        <engine sniffer="ejb"></engine>
-        <engine sniffer="security"></engine>
-        <engine sniffer="webservices"></engine>
-        <engine sniffer="jpa"></engine>
-      </module>
-      <module name="bookstore-web.war">
-        <property name="org.glassfish.persistence.drop_jdbc_file_name_property.openIDConnect" value="bookstore-ear_bookstore-web_openIDConnect_dropDDL.jdbc"></property>
-        <property name="org.glassfish.persistence.processor_type.openIDConnect" value="JPA"></property>
-        <property name="org.glassfish.persistence.create_jdbc_file_name_property.openIDConnect" value="bookstore-ear_bookstore-web_openIDConnect_createDDL.jdbc"></property>
-        <property name="org.glassfish.persistence.create_table_value_property.openIDConnect" value="true"></property>
-        <property name="org.glassfish.persistence.resource_jndi_name_property.openIDConnect" value="jdbc/bookstore"></property>
-        <property name="org.glassfish.persistence.drop_table_value_property.openIDConnect" value="false"></property>
-        <property name="org.glassfish.persistence.app_name_property" value="bookstore-ear"></property>
-        <engine sniffer="jpa"></engine>
-        <engine sniffer="security"></engine>
-        <engine sniffer="web"></engine>
-      </module>
-    </application>
-    -->
   </applications>
   <resources>
     <jdbc-resource pool-name="SamplePool" jndi-name="jdbc/sample"></jdbc-resource>
@@ -89,9 +52,6 @@
   <servers>
     <server name="server" config-ref="server-config">
       <application-ref ref="__admingui" virtual-servers="__asadmin"></application-ref>
-      <!--
-      <application-ref ref="bookstore-ear" virtual-servers="server"></application-ref>
-      -->
       <resource-ref ref="jdbc/__TimerPool"></resource-ref>
       <resource-ref ref="jdbc/__default"></resource-ref>
       <resource-ref ref="jdbc/bookstore"></resource-ref>
