@@ -106,20 +106,4 @@ public class Launcher {
             throw new RuntimeException("Cannot stop Java DB (Apache Derby)!", e);
         }
     }
-//    private static void addPackageToClassPath(File _package) throws Exception {
-//        addPackageToClassPathByURL(_package.toURI().toURL());
-//    }
-//
-//    private static void addPackageToClassPathByURL(URL url) throws Exception {
-//        URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-//        Class urlClassLoader = URLClassLoader.class;
-//
-//        try {
-//            Method addURLMethod = urlClassLoader.getDeclaredMethod("addURL", new Class[]{URL.class});
-//            addURLMethod.setAccessible(true);
-//            addURLMethod.invoke(systemClassLoader, new Object[]{url});
-//        } catch (Throwable t) {
-//            throw new Exception("Error, could not add URL to system class loader!", t);
-//        }
-//    }
 }

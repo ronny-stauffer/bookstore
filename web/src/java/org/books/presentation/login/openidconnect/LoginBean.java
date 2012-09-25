@@ -29,6 +29,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.UserTransaction;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -130,8 +131,9 @@ public class LoginBean {
     /**
      * Client Callback URI
      */
+    public static String CALLBACK_URI = ""; // Will be determined dynamically at runtime
     //public static final String CALLBACK_URI = "http://localhost:8080/bookstore/login/callback";
-    public static final String CALLBACK_URI = "http://wir-entwickeln.ch:8080/bookstore/login/callback";
+    public static final String RELATIVE_CALLBACK_URI = "/login/callback";
     
     public static final String PROVIDER_CONFIGURATION_LOGIN_CONTEXT_KEY = "openIdConnectProviderConfiguration";
     public static final String ACCESS_TOKEN_LOGIN_CONTEXT_KEY = "oAuthAccessToken";    
@@ -160,6 +162,8 @@ public class LoginBean {
     private String openIDConnectIdentifier;
 
     public String getOpenIDConnectIdentifier() {
+        initCallbackURI();
+        
         return openIDConnectIdentifier;
     }
 
@@ -451,7 +455,7 @@ public class LoginBean {
         assert providerConfiguration != null;
         
         ClientRegistration clientRegistration = null;
-
+        
         Client client = Client.create();
         try {
             clientRegistration = client.resource(providerConfiguration.registration_endpoint)
@@ -501,5 +505,14 @@ public class LoginBean {
         }        
         
         return clientRegistration;
+    }
+    
+    private static void initCallbackURI() {
+        HttpServletRequest origRequest = (HttpServletRequest)FacesContext.getCurrentInstance().getExternalContext().getRequest();
+        
+        String callbackURI = origRequest.getScheme() + "://" + origRequest.getServerName() + ":" + origRequest.getServerPort() + origRequest.getContextPath() + RELATIVE_CALLBACK_URI;
+        LOGGER.info(String.format("Callback URI: %s", callbackURI));
+        
+        CALLBACK_URI = callbackURI;        
     }
 }

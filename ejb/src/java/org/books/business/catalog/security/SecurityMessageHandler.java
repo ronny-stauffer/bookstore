@@ -19,8 +19,10 @@ import javax.xml.ws.handler.soap.SOAPMessageContext;
  * @author Christoph Horber
  */
 public class SecurityMessageHandler implements SOAPHandler<SOAPMessageContext> {
-    private static final String ACCESS_KEY = "AKIAIEGIIJQQX64BKDUQ"; //AKIAIYFLREOYORYNAQTQ";
-    private static final String SECRET_KEY = "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"; //taadPslXjp3a2gmthMgP369feVy32A32eM9SqkVP";
+    //TODO Set access key
+    private static final String ACCESS_KEY = "...";
+    //TODO Set secret key
+    private static final String SECRET_KEY = "...";
     
     private static final Logger LOGGER = Logger.getLogger(SecurityMessageHandler.class.getName());
     
