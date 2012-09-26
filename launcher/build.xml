@@ -79,8 +79,6 @@
             </fileset>
         </copy>
         
-        <!-- <copy file="lib/glassfish-embedded-all-3.1.2.2.jar" tofile="${build.classes.dir}/glassfish-embedded.jar"/> -->
-        
         <copy file="conf/domain.xml" todir="${build.classes.dir}"/>
         <copy file="conf/domain.xml" todir="${dist.dir}"/>
 
