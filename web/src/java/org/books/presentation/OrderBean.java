@@ -40,7 +40,7 @@ public class OrderBean {
     public static final String MISSING_LINE_ITEMS = "org.books.Bookstore.MISSING_LINE_ITEMS";   
     public static final String EXPIRED_CREDIT_CARD = "org.books.Bookstore.EXPIRED_CREDIT_CARD";
 
-    private static final Logger LOGGER = Logger.getLogger(OrderBean.class.getName());    
+    private static final Logger LOGGER = Logger.getLogger(OrderBean.class.getName());
     
     private final List<SelectItem> cardTypes;
     private final CreditCard creditCard;
