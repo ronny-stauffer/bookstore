@@ -1,0 +1,3 @@
+Unversioned content of this directory:
+
+* glassfish-embedded-all-3.1.2.2.jar
